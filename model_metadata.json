@@ -1,0 +1,41 @@
+{
+  "accuracy": 0.745,
+  "features": [
+    "latitude",
+    "longitude",
+    "time_of_day",
+    "weather_enc",
+    "road_enc",
+    "density_enc",
+    "accident_count",
+    "is_night",
+    "is_peak",
+    "is_bad_weather"
+  ],
+  "classes": [
+    "High",
+    "Low",
+    "Medium"
+  ],
+  "weather_classes": [
+    "Clear",
+    "Cloudy",
+    "Fog",
+    "Haze",
+    "Rain"
+  ],
+  "road_classes": [
+    "City Road",
+    "Flyover",
+    "Highway",
+    "Junction",
+    "Ring Road",
+    "Urban"
+  ],
+  "density_classes": [
+    "High",
+    "Low",
+    "Medium"
+  ],
+  "n_estimators": 100
+}

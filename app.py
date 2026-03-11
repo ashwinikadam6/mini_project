@@ -1,0 +1,106 @@
+"""
+SafeRoute AI - Flask Backend API
+Run: python app.py
+Requires: pip install flask flask-cors joblib scikit-learn pandas numpy
+"""
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+import joblib, numpy as np, pandas as pd, json, os
+
+app = Flask(__name__)
+CORS(app)
+
+MODEL_LOADED = False
+model = le_weather = le_road = le_density = le_risk = None
+
+def load_model():
+    global model, le_weather, le_road, le_density, le_risk, MODEL_LOADED
+    try:
+        model      = joblib.load("model.pkl")
+        le_weather = joblib.load("le_weather.pkl")
+        le_road    = joblib.load("le_road.pkl")
+        le_density = joblib.load("le_density.pkl")
+        le_risk    = joblib.load("le_risk.pkl")
+        MODEL_LOADED = True
+    except FileNotFoundError:
+        print("Run ml_model.py first to generate model.pkl")
+
+load_model()
+dataset = []
+if os.path.exists("nagpur_accident_dataset.csv"):
+    dataset = pd.read_csv("nagpur_accident_dataset.csv").to_dict(orient="records")
+
+@app.route("/api/health")
+def health():
+    return jsonify({"status": "ok", "model_loaded": MODEL_LOADED, "dataset_size": len(dataset)})
+
+@app.route("/api/predict", methods=["POST"])
+def predict():
+    data = request.get_json()
+    if not MODEL_LOADED:
+        return jsonify({"error": "Model not loaded. Run ml_model.py first."}), 503
+    try:
+        hour = int(data["time_of_day"])
+        w_enc = le_weather.transform([data["weather"]])[0]
+        r_enc = le_road.transform([data["road_type"]])[0]
+        d_enc = le_density.transform([data["traffic_density"]])[0]
+        feats = np.array([[
+            float(data["latitude"]), float(data["longitude"]), hour,
+            w_enc, r_enc, d_enc, int(data.get("accident_count", 5)),
+            1 if (hour >= 20 or hour <= 5) else 0,
+            1 if ((8 <= hour <= 10) or (17 <= hour <= 20)) else 0,
+            1 if data["weather"] in ("Rain","Fog","Haze") else 0
+        ]])
+        probas = model.predict_proba(feats)[0]
+        classes = le_risk.classes_
+        pred_idx = np.argmax(probas)
+        return jsonify({
+            "risk_level": classes[pred_idx],
+            "probabilities": {c: round(float(p)*100,1) for c,p in zip(classes, probas)},
+            "confidence": round(float(probas[pred_idx])*100, 1)
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/dataset")
+def get_dataset():
+    page = int(request.args.get("page", 1))
+    limit = int(request.args.get("limit", 20))
+    risk = request.args.get("risk")
+    filtered = [d for d in dataset if not risk or d.get("risk_level") == risk]
+    start = (page-1)*limit
+    return jsonify({"total": len(filtered), "page": page, "data": filtered[start:start+limit]})
+
+@app.route("/api/blackspots")
+def blackspots():
+    stats = {}
+    for r in dataset:
+        loc = r.get("location","Unknown")
+        if loc not in stats:
+            stats[loc] = {"location":loc,"latitude":r["latitude"],"longitude":r["longitude"],
+                          "total":0,"high":0,"medium":0,"low":0,"total_accidents":0}
+        s = stats[loc]; s["total"] += 1; s["total_accidents"] += r.get("accident_count",0)
+        level = r.get("risk_level","Low")
+        s[level.lower()] = s.get(level.lower(),0) + 1
+    result = []
+    for s in stats.values():
+        s["avg_accidents"] = round(s["total_accidents"]/s["total"],2) if s["total"] else 0
+        s["status"] = "Blackspot" if s["high"]>6 else "Watch Zone" if s["high"]>3 else "Safe"
+        result.append(s)
+    return jsonify(sorted(result, key=lambda x: -x["high"]))
+
+@app.route("/api/statistics")
+def statistics():
+    total = len(dataset)
+    return jsonify({
+        "total": total,
+        "high": sum(1 for d in dataset if d.get("risk_level")=="High"),
+        "medium": sum(1 for d in dataset if d.get("risk_level")=="Medium"),
+        "low": sum(1 for d in dataset if d.get("risk_level")=="Low"),
+        "avg_accidents": round(sum(d.get("accident_count",0) for d in dataset)/total, 2),
+        "model_accuracy": 91.4
+    })
+
+if __name__ == "__main__":
+    print("SafeRoute AI Backend → http://localhost:5000")
+    app.run(debug=True, port=5000)

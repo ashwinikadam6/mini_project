@@ -1,0 +1,1001 @@
+id,location,latitude,longitude,time_of_day,weather,road_type,traffic_density,accident_count,risk_level
+1,Sitabuldi Junction,21.15184,79.07046,6,Cloudy,Junction,High,3,Medium
+2,Wardha Road,21.08165,79.06447,23,Cloudy,Junction,Low,3,Medium
+3,Hingna T Point,21.09802,78.96053,9,Clear,Ring Road,Low,4,Low
+4,Chatrapati Square,21.10188,79.11147,13,Cloudy,Highway,Low,3,Low
+5,Ravi Nagar,21.13081,79.07207,3,Clear,Urban,Medium,2,Medium
+6,Dharampeth,21.11661,79.05063,15,Clear,City Road,Medium,8,Low
+7,Civil Lines,21.13454,79.07744,8,Cloudy,Junction,Low,5,Low
+8,Trimurti Nagar,21.12662,79.05643,23,Fog,City Road,Low,6,High
+9,Pratap Nagar,21.13271,79.05595,9,Rain,Junction,High,4,Medium
+10,Zero Mile,21.1306,79.07672,18,Clear,Ring Road,High,8,Medium
+11,Itwari,21.16012,79.09735,19,Rain,Highway,Low,4,Medium
+12,Sadar,21.13162,79.0751,16,Clear,Junction,Medium,5,Medium
+13,Nandanvan,21.13143,79.10361,0,Clear,Junction,Medium,6,High
+14,Mankapur,21.10385,79.05762,0,Clear,City Road,Medium,5,Medium
+15,Nagpur Railway Stn,21.14811,79.08619,7,Rain,Ring Road,Low,4,Medium
+16,Ambazari,21.14191,79.00334,1,Haze,Ring Road,Medium,6,Medium
+17,Beltarodi,21.0502,79.01643,16,Clear,Flyover,Medium,0,Medium
+18,Koradi,21.24976,78.98715,17,Rain,Highway,High,1,High
+19,Butibori,20.97525,79.06179,23,Fog,Flyover,Medium,3,High
+20,MIDC Hingna,21.09582,78.98708,0,Rain,City Road,Low,2,Medium
+21,Sitabuldi Junction,21.16325,79.09604,13,Haze,Highway,Low,8,Medium
+22,Wardha Road,21.10395,79.04546,7,Clear,Junction,Medium,3,Medium
+23,Hingna T Point,21.10313,78.96144,21,Rain,Highway,High,10,High
+24,Chatrapati Square,21.10913,79.10002,21,Rain,Junction,Low,4,High
+25,Ravi Nagar,21.13234,79.06476,3,Cloudy,Junction,Medium,2,Medium
+26,Dharampeth,21.11959,79.05375,4,Clear,Junction,Medium,3,Medium
+27,Civil Lines,21.13681,79.07868,7,Haze,City Road,Medium,3,Low
+28,Trimurti Nagar,21.15553,79.06028,4,Clear,Highway,High,1,High
+29,Pratap Nagar,21.11513,79.06626,3,Clear,Highway,Medium,2,High
+30,Zero Mile,21.15903,79.09264,4,Fog,City Road,High,7,High
+31,Itwari,21.15056,79.115,0,Haze,Ring Road,Low,1,Medium
+32,Sadar,21.14702,79.1,1,Clear,City Road,Medium,2,Medium
+33,Nandanvan,21.11412,79.1361,3,Clear,Urban,High,7,Medium
+34,Mankapur,21.13622,79.02365,19,Cloudy,Highway,High,1,Medium
+35,Nagpur Railway Stn,21.13441,79.10285,6,Haze,Urban,Medium,2,Medium
+36,Ambazari,21.14191,78.98334,15,Cloudy,Junction,Medium,2,Medium
+37,Beltarodi,21.07325,79.04453,17,Haze,Urban,High,6,Medium
+38,Koradi,21.24697,79.01625,21,Cloudy,Ring Road,High,4,Medium
+39,Butibori,20.97113,79.04745,6,Rain,Highway,Medium,7,Medium
+40,MIDC Hingna,21.09782,78.98302,11,Haze,City Road,Medium,3,Low
+41,Sitabuldi Junction,21.15061,79.0793,14,Fog,Urban,Medium,3,Medium
+42,Wardha Road,21.10255,79.06739,3,Rain,Highway,Medium,5,High
+43,Hingna T Point,21.11242,78.99949,12,Haze,Flyover,High,5,Medium
+44,Chatrapati Square,21.10585,79.07565,16,Rain,Urban,Medium,3,Medium
+45,Ravi Nagar,21.12415,79.06187,22,Cloudy,Flyover,High,7,High
+46,Dharampeth,21.11115,79.08021,1,Rain,Junction,Medium,8,High
+47,Civil Lines,21.15004,79.10142,20,Fog,Flyover,High,5,High
+48,Trimurti Nagar,21.14983,79.0419,22,Rain,Urban,High,4,High
+49,Pratap Nagar,21.12997,79.05261,10,Rain,Highway,Medium,4,Medium
+50,Zero Mile,21.14815,79.08898,17,Fog,Junction,High,2,High
+51,Itwari,21.16773,79.08858,11,Clear,Highway,Medium,3,Medium
+52,Sadar,21.13621,79.06662,14,Rain,Ring Road,Low,3,Low
+53,Nandanvan,21.1108,79.11288,2,Cloudy,City Road,Medium,3,Medium
+54,Mankapur,21.12337,79.04947,6,Clear,City Road,Low,4,Low
+55,Nagpur Railway Stn,21.13539,79.06907,14,Fog,Highway,Low,4,Medium
+56,Ambazari,21.14009,78.97137,5,Rain,City Road,High,2,High
+57,Beltarodi,21.07892,79.04283,7,Fog,Ring Road,High,2,Medium
+58,Koradi,21.2397,78.98459,1,Rain,City Road,Low,4,Medium
+59,Butibori,20.95253,79.0696,13,Clear,City Road,Low,2,Low
+60,MIDC Hingna,21.07467,78.99893,12,Fog,Junction,Low,0,Medium
+61,Sitabuldi Junction,21.14878,79.10187,5,Rain,Highway,High,5,High
+62,Wardha Road,21.09353,79.06732,7,Cloudy,Urban,High,5,Low
+63,Hingna T Point,21.10497,78.96468,7,Rain,Highway,Medium,5,Medium
+64,Chatrapati Square,21.13164,79.08083,5,Clear,Urban,Medium,7,Medium
+65,Ravi Nagar,21.121,79.04417,3,Rain,Urban,High,4,High
+66,Dharampeth,21.12694,79.06152,11,Cloudy,Junction,Medium,6,Medium
+67,Civil Lines,21.1689,79.09329,10,Clear,City Road,Medium,1,Low
+68,Trimurti Nagar,21.15862,79.06443,9,Cloudy,Highway,Low,1,Low
+69,Pratap Nagar,21.12711,79.03219,0,Clear,Ring Road,High,5,Medium
+70,Zero Mile,21.16271,79.07753,8,Clear,Highway,High,5,Medium
+71,Itwari,21.15616,79.10349,6,Clear,Junction,Medium,3,Medium
+72,Sadar,21.16622,79.06951,21,Clear,Ring Road,Medium,3,Medium
+73,Nandanvan,21.13239,79.10621,16,Clear,City Road,Medium,3,Low
+74,Mankapur,21.11016,79.02784,0,Clear,Junction,High,8,High
+75,Nagpur Railway Stn,21.16013,79.09821,7,Clear,Urban,Low,2,Low
+76,Ambazari,21.13584,79.00323,3,Haze,Junction,Medium,2,High
+77,Beltarodi,21.06638,79.03208,15,Clear,City Road,Medium,5,Low
+78,Koradi,21.24939,79.0005,1,Cloudy,Junction,High,5,High
+79,Butibori,20.97217,79.05606,8,Rain,City Road,Low,4,Low
+80,MIDC Hingna,21.08533,79.00076,11,Clear,Junction,Low,7,Medium
+81,Sitabuldi Junction,21.13768,79.09086,1,Clear,Urban,Low,3,Medium
+82,Wardha Road,21.10366,79.07386,1,Rain,Ring Road,Low,3,Medium
+83,Hingna T Point,21.11848,78.9916,12,Clear,City Road,Medium,5,Low
+84,Chatrapati Square,21.1273,79.07687,22,Rain,Junction,High,9,High
+85,Ravi Nagar,21.14948,79.06878,15,Haze,Junction,Medium,3,Medium
+86,Dharampeth,21.1329,79.08216,17,Rain,City Road,Medium,6,Medium
+87,Civil Lines,21.16956,79.09695,3,Cloudy,Highway,Medium,3,Medium
+88,Trimurti Nagar,21.14823,79.03887,6,Clear,Junction,Low,1,Medium
+89,Pratap Nagar,21.12911,79.06062,9,Clear,Highway,Medium,1,Low
+90,Zero Mile,21.12978,79.0843,4,Clear,Junction,High,5,High
+91,Itwari,21.14261,79.08308,23,Cloudy,City Road,High,4,Medium
+92,Sadar,21.14615,79.09163,8,Clear,Urban,Medium,5,Low
+93,Nandanvan,21.11518,79.13555,16,Clear,Flyover,Low,4,Low
+94,Mankapur,21.11039,79.04894,1,Cloudy,Flyover,Medium,3,High
+95,Nagpur Railway Stn,21.13981,79.09212,17,Clear,Junction,Medium,3,Medium
+96,Ambazari,21.14163,79.00417,12,Clear,Flyover,High,9,Medium
+97,Beltarodi,21.06035,79.01773,18,Cloudy,Junction,High,2,High
+98,Koradi,21.26044,79.00165,12,Fog,Ring Road,Medium,4,Medium
+99,Butibori,20.95269,79.05329,1,Clear,City Road,High,3,Medium
+100,MIDC Hingna,21.10286,78.99487,0,Clear,Junction,High,6,High
+101,Sitabuldi Junction,21.15671,79.0774,18,Clear,Junction,Low,5,Medium
+102,Wardha Road,21.10936,79.05637,10,Clear,Ring Road,Low,5,Low
+103,Hingna T Point,21.11084,78.99379,5,Clear,Junction,Low,5,Medium
+104,Chatrapati Square,21.12443,79.09939,19,Clear,Urban,Low,4,Low
+105,Ravi Nagar,21.13321,79.03546,19,Rain,Junction,Medium,2,High
+106,Dharampeth,21.13284,79.05073,17,Fog,Highway,High,8,High
+107,Civil Lines,21.13551,79.07903,21,Fog,Urban,Medium,0,Medium
+108,Trimurti Nagar,21.15182,79.06606,0,Cloudy,Highway,Medium,4,Medium
+109,Pratap Nagar,21.12635,79.05124,2,Cloudy,City Road,Medium,8,Medium
+110,Zero Mile,21.15597,79.10247,8,Clear,Highway,High,5,Medium
+111,Itwari,21.17253,79.11029,20,Fog,City Road,Medium,6,High
+112,Sadar,21.15931,79.08077,23,Rain,Highway,Medium,4,High
+113,Nandanvan,21.14104,79.11621,1,Rain,Urban,Medium,4,Medium
+114,Mankapur,21.1039,79.0362,22,Fog,Highway,Medium,2,High
+115,Nagpur Railway Stn,21.15684,79.07023,13,Rain,Highway,Medium,3,Medium
+116,Ambazari,21.12438,78.99282,12,Clear,Junction,High,4,Medium
+117,Beltarodi,21.08223,79.03341,11,Fog,Junction,Low,2,Medium
+118,Koradi,21.2556,78.98899,14,Rain,City Road,Low,3,Low
+119,Butibori,20.96819,79.05062,4,Haze,Highway,Medium,1,High
+120,MIDC Hingna,21.09932,78.9865,17,Clear,City Road,Low,2,Low
+121,Sitabuldi Junction,21.12702,79.10544,20,Clear,Urban,Medium,7,Medium
+122,Wardha Road,21.0942,79.05272,13,Haze,City Road,High,4,Medium
+123,Hingna T Point,21.08481,78.98178,0,Rain,Flyover,High,8,High
+124,Chatrapati Square,21.10959,79.07803,20,Clear,Highway,Medium,4,Medium
+125,Ravi Nagar,21.12484,79.05407,2,Clear,City Road,High,6,Medium
+126,Dharampeth,21.11783,79.0503,10,Cloudy,Flyover,High,1,Medium
+127,Civil Lines,21.15292,79.0918,14,Clear,Ring Road,Medium,3,Low
+128,Trimurti Nagar,21.15938,79.05999,14,Rain,City Road,Low,5,Low
+129,Pratap Nagar,21.0951,79.05752,6,Clear,Urban,Low,4,Low
+130,Zero Mile,21.15742,79.07859,20,Cloudy,Junction,Low,5,Medium
+131,Itwari,21.15672,79.10261,18,Cloudy,Urban,High,3,Medium
+132,Sadar,21.16981,79.06676,21,Clear,City Road,Medium,4,Medium
+133,Nandanvan,21.13413,79.11349,20,Fog,Highway,Medium,1,High
+134,Mankapur,21.13327,79.04678,6,Cloudy,Highway,Medium,5,Medium
+135,Nagpur Railway Stn,21.14451,79.06741,11,Clear,City Road,High,6,Medium
+136,Ambazari,21.10645,78.98133,11,Clear,Ring Road,Medium,4,Low
+137,Beltarodi,21.08021,79.01511,7,Cloudy,Ring Road,Low,6,Low
+138,Koradi,21.24524,78.99385,15,Rain,Junction,Low,2,Medium
+139,Butibori,20.97159,79.05512,8,Rain,Flyover,Low,6,Medium
+140,MIDC Hingna,21.07615,78.98894,23,Rain,Urban,Low,3,Medium
+141,Sitabuldi Junction,21.13165,79.0829,13,Haze,City Road,High,6,Low
+142,Wardha Road,21.09377,79.07746,7,Rain,City Road,Low,2,Low
+143,Hingna T Point,21.11979,78.96231,19,Rain,Junction,Medium,3,High
+144,Chatrapati Square,21.10761,79.10276,23,Clear,Highway,Low,2,Medium
+145,Ravi Nagar,21.12278,79.04971,0,Rain,Ring Road,High,5,High
+146,Dharampeth,21.12665,79.06925,21,Cloudy,Urban,High,0,Medium
+147,Civil Lines,21.15784,79.08497,21,Cloudy,City Road,Medium,5,Medium
+148,Trimurti Nagar,21.12909,79.05435,22,Clear,Junction,High,7,High
+149,Pratap Nagar,21.1308,79.05747,8,Fog,Highway,Low,3,Medium
+150,Zero Mile,21.12772,79.09745,14,Cloudy,City Road,High,3,Low
+151,Itwari,21.14174,79.10761,0,Clear,Junction,Low,6,Medium
+152,Sadar,21.13516,79.0859,7,Clear,Junction,Low,5,Low
+153,Nandanvan,21.14681,79.12083,13,Clear,Ring Road,Medium,3,Low
+154,Mankapur,21.12452,79.05772,1,Clear,Highway,High,3,Medium
+155,Nagpur Railway Stn,21.15696,79.09125,19,Clear,Junction,High,8,High
+156,Ambazari,21.14501,78.98884,10,Clear,Urban,Low,4,Low
+157,Beltarodi,21.05037,79.01987,22,Cloudy,Urban,Medium,7,Medium
+158,Koradi,21.25155,79.00097,4,Cloudy,Highway,Low,7,Medium
+159,Butibori,20.98985,79.04473,9,Cloudy,Junction,High,4,Medium
+160,MIDC Hingna,21.09478,78.99422,3,Fog,Flyover,Medium,3,High
+161,Sitabuldi Junction,21.15286,79.1004,12,Clear,City Road,Medium,3,Low
+162,Wardha Road,21.08313,79.05736,18,Rain,Junction,Low,6,High
+163,Hingna T Point,21.11965,78.98989,17,Rain,Junction,High,5,High
+164,Chatrapati Square,21.10147,79.10837,6,Rain,City Road,Low,2,Low
+165,Ravi Nagar,21.13424,79.05241,12,Fog,Ring Road,High,2,Medium
+166,Dharampeth,21.11229,79.05901,4,Fog,City Road,Low,3,Medium
+167,Civil Lines,21.14188,79.10125,11,Clear,Urban,Medium,2,Low
+168,Trimurti Nagar,21.14979,79.05048,23,Haze,Highway,Medium,4,High
+169,Pratap Nagar,21.13247,79.03409,20,Rain,Highway,Medium,2,High
+170,Zero Mile,21.13855,79.10548,11,Cloudy,City Road,Medium,4,Low
+171,Itwari,21.16611,79.10294,11,Clear,Junction,Low,4,Low
+172,Sadar,21.16478,79.07971,5,Clear,Flyover,Medium,3,High
+173,Nandanvan,21.11659,79.11321,6,Rain,Junction,Medium,3,Medium
+174,Mankapur,21.13003,79.04232,13,Cloudy,Junction,Low,4,Low
+175,Nagpur Railway Stn,21.16448,79.07315,1,Clear,City Road,High,4,Medium
+176,Ambazari,21.14228,78.99011,9,Clear,Highway,High,3,Medium
+177,Beltarodi,21.07931,79.04282,19,Rain,Junction,Medium,4,High
+178,Koradi,21.26528,78.9971,4,Rain,City Road,Low,8,Medium
+179,Butibori,20.96347,79.04186,22,Clear,Urban,Low,2,Medium
+180,MIDC Hingna,21.07695,79.00848,5,Rain,Urban,Medium,6,High
+181,Sitabuldi Junction,21.13596,79.06944,23,Clear,Urban,Medium,6,Medium
+182,Wardha Road,21.07308,79.05362,15,Clear,Highway,Low,4,Low
+183,Hingna T Point,21.10242,78.96444,14,Clear,Junction,Low,7,Medium
+184,Chatrapati Square,21.11736,79.07619,23,Rain,Junction,Medium,4,High
+185,Ravi Nagar,21.12626,79.06991,5,Clear,Flyover,Low,3,Medium
+186,Dharampeth,21.13269,79.06135,13,Clear,Junction,Low,1,Low
+187,Civil Lines,21.16378,79.06639,13,Rain,Highway,Low,5,Medium
+188,Trimurti Nagar,21.1545,79.04901,2,Clear,Urban,Medium,3,Medium
+189,Pratap Nagar,21.1307,79.04974,8,Fog,Flyover,High,4,High
+190,Zero Mile,21.15767,79.10643,7,Haze,Highway,High,3,Medium
+191,Itwari,21.13963,79.0868,11,Haze,City Road,High,3,Medium
+192,Sadar,21.15096,79.06152,9,Haze,Highway,Medium,3,Medium
+193,Nandanvan,21.12111,79.13267,13,Clear,Flyover,High,3,Medium
+194,Mankapur,21.11578,79.03687,16,Fog,Junction,Medium,6,Medium
+195,Nagpur Railway Stn,21.12752,79.09986,11,Cloudy,Urban,Low,6,Low
+196,Ambazari,21.10924,78.97251,17,Clear,Highway,Medium,3,Medium
+197,Beltarodi,21.07552,79.03964,14,Fog,Highway,Medium,5,Medium
+198,Koradi,21.24597,79.01641,5,Cloudy,Ring Road,High,3,Medium
+199,Butibori,20.98447,79.05361,16,Clear,City Road,High,3,Low
+200,MIDC Hingna,21.09822,79.00754,11,Cloudy,Flyover,High,5,Medium
+201,Sitabuldi Junction,21.12607,79.08363,6,Rain,Junction,Medium,3,Medium
+202,Wardha Road,21.08942,79.0411,10,Clear,Urban,Medium,5,Low
+203,Hingna T Point,21.09157,78.996,2,Haze,Highway,Low,1,Medium
+204,Chatrapati Square,21.12216,79.08127,4,Haze,Highway,High,7,High
+205,Ravi Nagar,21.14823,79.05679,16,Rain,Junction,Low,5,Medium
+206,Dharampeth,21.12581,79.05158,0,Rain,Junction,Medium,8,High
+207,Civil Lines,21.13431,79.09223,16,Fog,Ring Road,Low,4,Medium
+208,Trimurti Nagar,21.13313,79.05847,8,Cloudy,Ring Road,Low,6,Low
+209,Pratap Nagar,21.10748,79.04224,14,Fog,Ring Road,Medium,7,Medium
+210,Zero Mile,21.15371,79.09651,4,Rain,City Road,High,1,High
+211,Itwari,21.14056,79.08143,21,Rain,City Road,Medium,6,High
+212,Sadar,21.1466,79.07758,7,Cloudy,Urban,High,4,Low
+213,Nandanvan,21.14368,79.10969,5,Clear,City Road,Medium,2,Medium
+214,Mankapur,21.13717,79.0362,5,Clear,Junction,Medium,3,High
+215,Nagpur Railway Stn,21.14387,79.08843,21,Clear,City Road,Low,5,Medium
+216,Ambazari,21.12893,78.9741,7,Rain,City Road,Medium,3,Medium
+217,Beltarodi,21.0786,79.03374,22,Fog,Highway,Low,5,High
+218,Koradi,21.24441,78.99082,16,Clear,Flyover,Low,3,Low
+219,Butibori,20.96551,79.05531,1,Clear,Urban,High,4,Medium
+220,MIDC Hingna,21.09704,79.01776,23,Fog,Junction,Low,3,High
+221,Sitabuldi Junction,21.14311,79.08651,8,Clear,Urban,Medium,1,Low
+222,Wardha Road,21.10479,79.06922,17,Fog,Urban,Low,5,Medium
+223,Hingna T Point,21.10853,78.96797,21,Clear,Urban,Medium,4,Medium
+224,Chatrapati Square,21.13694,79.10863,3,Clear,Junction,Medium,5,High
+225,Ravi Nagar,21.13576,79.0621,16,Clear,Highway,Medium,3,Medium
+226,Dharampeth,21.1253,79.06471,19,Rain,Highway,Low,3,Medium
+227,Civil Lines,21.17097,79.09888,4,Clear,Junction,Low,4,Medium
+228,Trimurti Nagar,21.16098,79.05641,8,Rain,Flyover,Medium,2,Medium
+229,Pratap Nagar,21.12403,79.05679,1,Fog,City Road,Low,7,Medium
+230,Zero Mile,21.1552,79.08915,9,Clear,Highway,High,6,Medium
+231,Itwari,21.16824,79.09537,8,Fog,Urban,High,2,Medium
+232,Sadar,21.14955,79.09721,20,Haze,City Road,High,5,High
+233,Nandanvan,21.13374,79.10292,11,Cloudy,Ring Road,High,8,Low
+234,Mankapur,21.1124,79.02928,21,Clear,Junction,High,8,High
+235,Nagpur Railway Stn,21.13877,79.09892,10,Fog,Junction,Medium,2,Medium
+236,Ambazari,21.14246,78.97545,7,Cloudy,Highway,Low,2,Low
+237,Beltarodi,21.07256,79.02434,22,Haze,Ring Road,Low,7,Medium
+238,Koradi,21.23915,79.01825,3,Cloudy,Ring Road,High,3,Medium
+239,Butibori,20.98786,79.0657,21,Cloudy,Highway,High,5,High
+240,MIDC Hingna,21.09375,78.98131,20,Cloudy,Flyover,High,3,High
+241,Sitabuldi Junction,21.14281,79.0697,13,Clear,Junction,High,7,Medium
+242,Wardha Road,21.08217,79.05216,20,Cloudy,Junction,Medium,3,High
+243,Hingna T Point,21.09348,78.99998,2,Cloudy,Junction,Low,8,Medium
+244,Chatrapati Square,21.12887,79.08179,3,Haze,Urban,Medium,3,Medium
+245,Ravi Nagar,21.12188,79.0739,8,Clear,City Road,Medium,4,Low
+246,Dharampeth,21.14402,79.06378,23,Clear,Junction,Low,2,Medium
+247,Civil Lines,21.16138,79.08037,1,Cloudy,Junction,Medium,8,High
+248,Trimurti Nagar,21.15325,79.04937,18,Cloudy,Junction,High,4,Medium
+249,Pratap Nagar,21.12986,79.05891,7,Clear,City Road,High,5,Low
+250,Zero Mile,21.12699,79.08323,4,Clear,Highway,High,5,High
+251,Itwari,21.16522,79.0945,4,Rain,City Road,Medium,3,Medium
+252,Sadar,21.16795,79.09789,1,Clear,Highway,High,7,High
+253,Nandanvan,21.12057,79.10821,7,Clear,City Road,Low,5,Low
+254,Mankapur,21.13806,79.03189,2,Clear,Highway,Medium,3,Medium
+255,Nagpur Railway Stn,21.13588,79.06508,21,Fog,City Road,Low,6,High
+256,Ambazari,21.10702,78.99262,3,Haze,Junction,Low,7,High
+257,Beltarodi,21.05337,79.04229,16,Rain,Ring Road,Low,6,Medium
+258,Koradi,21.25358,79.00453,14,Clear,Highway,High,0,Medium
+259,Butibori,20.96083,79.0399,8,Clear,Urban,Low,3,Low
+260,MIDC Hingna,21.08974,78.99133,7,Rain,Highway,Low,5,Medium
+261,Sitabuldi Junction,21.14733,79.07895,23,Clear,City Road,High,3,Medium
+262,Wardha Road,21.09597,79.07745,0,Cloudy,Urban,High,5,Medium
+263,Hingna T Point,21.09964,78.99708,17,Cloudy,Highway,Medium,1,Medium
+264,Chatrapati Square,21.1382,79.10497,14,Clear,Urban,Low,4,Low
+265,Ravi Nagar,21.12915,79.06814,2,Cloudy,Urban,Low,3,Low
+266,Dharampeth,21.12571,79.07213,12,Clear,Ring Road,High,5,Low
+267,Civil Lines,21.14844,79.09388,2,Clear,City Road,High,4,Medium
+268,Trimurti Nagar,21.15375,79.0573,19,Clear,Junction,Low,0,Low
+269,Pratap Nagar,21.10744,79.03868,17,Clear,City Road,Medium,5,Low
+270,Zero Mile,21.13307,79.0876,14,Rain,Junction,Low,7,Medium
+271,Itwari,21.16872,79.11926,18,Rain,City Road,Low,7,Medium
+272,Sadar,21.15924,79.08273,0,Clear,Urban,Low,5,Medium
+273,Nandanvan,21.12937,79.10053,0,Rain,Flyover,Low,3,High
+274,Mankapur,21.13509,79.03558,13,Rain,Flyover,High,1,High
+275,Nagpur Railway Stn,21.13992,79.0799,7,Haze,Junction,Medium,3,Medium
+276,Ambazari,21.11511,78.99577,22,Rain,City Road,High,2,High
+277,Beltarodi,21.07192,79.03084,16,Rain,City Road,Low,1,Low
+278,Koradi,21.24563,78.98635,6,Fog,Urban,Low,4,Medium
+279,Butibori,20.96255,79.03966,15,Cloudy,City Road,Medium,5,Low
+280,MIDC Hingna,21.09785,78.99531,1,Rain,Ring Road,Medium,1,Medium
+281,Sitabuldi Junction,21.13455,79.09201,22,Fog,Urban,Low,5,Medium
+282,Wardha Road,21.08856,79.05056,21,Clear,Urban,High,6,Medium
+283,Hingna T Point,21.10992,78.99251,20,Cloudy,Flyover,Medium,6,High
+284,Chatrapati Square,21.11695,79.0803,5,Clear,Ring Road,Medium,5,Medium
+285,Ravi Nagar,21.11563,79.03569,19,Cloudy,Flyover,Medium,0,Medium
+286,Dharampeth,21.1383,79.06557,23,Fog,Urban,Low,9,Medium
+287,Civil Lines,21.1696,79.08516,19,Rain,Flyover,Medium,5,High
+288,Trimurti Nagar,21.15077,79.06697,10,Cloudy,Highway,High,3,Medium
+289,Pratap Nagar,21.12853,79.06411,21,Clear,Junction,Medium,6,High
+290,Zero Mile,21.14991,79.0818,5,Rain,City Road,Medium,4,High
+291,Itwari,21.14281,79.08922,21,Fog,Junction,Low,8,High
+292,Sadar,21.13298,79.10031,4,Cloudy,City Road,High,3,Medium
+293,Nandanvan,21.1312,79.13941,16,Fog,Flyover,Medium,4,Medium
+294,Mankapur,21.13306,79.03462,7,Clear,Junction,Low,3,Low
+295,Nagpur Railway Stn,21.138,79.08754,3,Fog,Junction,Low,4,High
+296,Ambazari,21.11337,79.00432,4,Rain,Urban,Medium,1,Medium
+297,Beltarodi,21.07669,79.04108,0,Rain,Highway,High,2,High
+298,Koradi,21.25091,78.99883,14,Clear,Junction,Low,3,Medium
+299,Butibori,20.98806,79.03702,8,Rain,City Road,High,5,Medium
+300,MIDC Hingna,21.10419,78.98661,18,Fog,City Road,High,5,Medium
+301,Sitabuldi Junction,21.12928,79.09047,2,Clear,Junction,High,5,High
+302,Wardha Road,21.07003,79.07483,4,Clear,Urban,Low,3,Medium
+303,Hingna T Point,21.11698,78.99143,17,Clear,Highway,Low,3,Medium
+304,Chatrapati Square,21.11641,79.1082,12,Rain,City Road,High,5,Medium
+305,Ravi Nagar,21.14912,79.07214,12,Fog,Urban,Low,5,Low
+306,Dharampeth,21.13898,79.05446,14,Clear,Junction,Medium,1,Medium
+307,Civil Lines,21.16917,79.08049,7,Clear,Junction,Medium,5,Medium
+308,Trimurti Nagar,21.1367,79.04129,17,Clear,Urban,Medium,2,Medium
+309,Pratap Nagar,21.11991,79.0716,1,Fog,Ring Road,Low,8,High
+310,Zero Mile,21.1328,79.0772,2,Clear,Highway,High,6,High
+311,Itwari,21.16092,79.11737,23,Rain,Junction,High,4,High
+312,Sadar,21.1421,79.07325,4,Clear,Ring Road,High,6,Medium
+313,Nandanvan,21.12152,79.11971,15,Clear,Junction,Low,3,Low
+314,Mankapur,21.12635,79.05726,13,Rain,Highway,Low,4,Medium
+315,Nagpur Railway Stn,21.13008,79.08807,2,Rain,Urban,High,2,High
+316,Ambazari,21.14132,79.00088,22,Rain,Junction,Medium,6,High
+317,Beltarodi,21.06832,79.01906,7,Clear,Ring Road,High,5,Low
+318,Koradi,21.23207,79.00229,14,Rain,Junction,Medium,5,Medium
+319,Butibori,20.9873,79.03475,12,Clear,City Road,Medium,5,Low
+320,MIDC Hingna,21.10712,79.01379,21,Clear,Highway,Medium,5,Medium
+321,Sitabuldi Junction,21.15915,79.10079,6,Rain,Junction,Medium,3,Medium
+322,Wardha Road,21.08152,79.06225,16,Cloudy,Ring Road,Medium,4,Low
+323,Hingna T Point,21.11737,78.99666,15,Cloudy,Junction,Medium,4,Medium
+324,Chatrapati Square,21.13174,79.09103,9,Clear,Highway,Low,1,Low
+325,Ravi Nagar,21.13556,79.04734,1,Cloudy,Junction,High,5,High
+326,Dharampeth,21.14429,79.08282,19,Clear,Flyover,Medium,5,Medium
+327,Civil Lines,21.15952,79.06982,2,Haze,Highway,High,2,High
+328,Trimurti Nagar,21.14269,79.05989,8,Clear,Junction,High,5,Medium
+329,Pratap Nagar,21.10152,79.04135,9,Clear,Highway,Low,0,Low
+330,Zero Mile,21.16328,79.07615,10,Cloudy,Ring Road,Medium,3,Low
+331,Itwari,21.13941,79.10473,15,Rain,Highway,Low,1,Medium
+332,Sadar,21.13808,79.06503,12,Rain,Junction,Low,4,Medium
+333,Nandanvan,21.14483,79.10334,12,Cloudy,Flyover,Low,3,Low
+334,Mankapur,21.11186,79.05643,15,Clear,Urban,High,6,Low
+335,Nagpur Railway Stn,21.15801,79.07486,19,Fog,Highway,Medium,2,Medium
+336,Ambazari,21.1333,79.00234,21,Clear,Flyover,High,3,High
+337,Beltarodi,21.05469,79.01676,8,Rain,Junction,Low,3,Medium
+338,Koradi,21.25257,79.01402,2,Rain,Flyover,Low,4,High
+339,Butibori,20.96014,79.04884,13,Clear,Highway,Low,1,Low
+340,MIDC Hingna,21.07504,79.01917,10,Haze,Highway,Low,3,Medium
+341,Sitabuldi Junction,21.13875,79.09465,10,Haze,Junction,Low,3,Medium
+342,Wardha Road,21.08365,79.05914,21,Clear,Junction,Low,3,Medium
+343,Hingna T Point,21.08664,78.96099,1,Rain,Junction,Low,10,High
+344,Chatrapati Square,21.12909,79.08683,20,Clear,Junction,Medium,3,High
+345,Ravi Nagar,21.13269,79.0367,13,Cloudy,Ring Road,Medium,5,Low
+346,Dharampeth,21.14326,79.08674,11,Clear,Urban,Medium,2,Low
+347,Civil Lines,21.13793,79.06868,1,Clear,Flyover,Medium,3,High
+348,Trimurti Nagar,21.1442,79.03352,7,Cloudy,Flyover,High,6,Medium
+349,Pratap Nagar,21.1078,79.05106,10,Cloudy,Ring Road,Medium,1,Low
+350,Zero Mile,21.14934,79.09534,0,Rain,Urban,Medium,3,High
+351,Itwari,21.1471,79.09024,12,Clear,Flyover,Medium,5,Medium
+352,Sadar,21.13452,79.08472,7,Haze,Junction,Medium,3,Medium
+353,Nandanvan,21.13455,79.13592,22,Clear,City Road,High,2,Medium
+354,Mankapur,21.13766,79.04119,7,Rain,Junction,High,5,Medium
+355,Nagpur Railway Stn,21.16467,79.08011,20,Clear,Junction,High,6,High
+356,Ambazari,21.11097,79.00694,21,Rain,Junction,Low,2,High
+357,Beltarodi,21.05606,79.0291,12,Clear,Flyover,Medium,4,Medium
+358,Koradi,21.2548,79.00793,6,Rain,Junction,High,3,High
+359,Butibori,20.96585,79.04185,3,Rain,City Road,High,4,High
+360,MIDC Hingna,21.0826,79.01166,15,Rain,Flyover,Medium,5,Medium
+361,Sitabuldi Junction,21.14903,79.10564,11,Cloudy,Urban,Low,4,Low
+362,Wardha Road,21.10258,79.05121,9,Rain,Flyover,High,2,Medium
+363,Hingna T Point,21.08193,78.99282,20,Rain,City Road,Medium,3,Medium
+364,Chatrapati Square,21.13792,79.09374,3,Clear,Highway,Medium,1,Medium
+365,Ravi Nagar,21.14555,79.05594,22,Rain,Highway,High,5,High
+366,Dharampeth,21.11572,79.07969,9,Rain,Highway,Medium,0,Medium
+367,Civil Lines,21.15282,79.10478,14,Rain,Highway,High,5,Medium
+368,Trimurti Nagar,21.13241,79.04965,8,Rain,Ring Road,Low,1,Low
+369,Pratap Nagar,21.12415,79.03388,4,Rain,Highway,Medium,7,High
+370,Zero Mile,21.13945,79.09824,12,Clear,Highway,Medium,1,Low
+371,Itwari,21.16695,79.09381,8,Rain,Junction,Medium,1,Medium
+372,Sadar,21.14152,79.0753,12,Clear,Junction,Low,5,Medium
+373,Nandanvan,21.12091,79.12926,10,Cloudy,Highway,Medium,6,Medium
+374,Mankapur,21.11663,79.04194,0,Cloudy,Flyover,High,2,High
+375,Nagpur Railway Stn,21.14326,79.0701,12,Fog,City Road,Low,3,Medium
+376,Ambazari,21.12527,78.99144,8,Clear,Highway,Medium,5,Medium
+377,Beltarodi,21.07979,79.0265,12,Clear,Junction,High,2,Medium
+378,Koradi,21.25397,79.00055,20,Fog,City Road,Medium,2,High
+379,Butibori,20.95244,79.03124,17,Rain,Ring Road,Low,2,Medium
+380,MIDC Hingna,21.09352,78.99264,16,Rain,Junction,Low,3,Medium
+381,Sitabuldi Junction,21.14119,79.08564,18,Cloudy,City Road,Low,2,Low
+382,Wardha Road,21.07687,79.06072,12,Rain,Highway,Medium,1,Medium
+383,Hingna T Point,21.10828,78.9865,19,Rain,Junction,Medium,5,High
+384,Chatrapati Square,21.10974,79.111,14,Fog,Urban,High,4,Medium
+385,Ravi Nagar,21.15227,79.05981,20,Clear,Ring Road,Low,4,Medium
+386,Dharampeth,21.11218,79.0573,6,Clear,Highway,Medium,3,Medium
+387,Civil Lines,21.14793,79.06527,12,Rain,City Road,High,2,Medium
+388,Trimurti Nagar,21.12602,79.05952,14,Haze,Flyover,High,5,Medium
+389,Pratap Nagar,21.1223,79.04526,15,Rain,Junction,Low,7,Medium
+390,Zero Mile,21.12641,79.08542,16,Fog,Junction,Low,2,Medium
+391,Itwari,21.17272,79.08795,15,Clear,Urban,High,6,Low
+392,Sadar,21.16312,79.08837,7,Cloudy,Ring Road,Low,1,Low
+393,Nandanvan,21.13788,79.11452,0,Clear,Urban,Medium,5,Medium
+394,Mankapur,21.11399,79.0545,16,Clear,Junction,Medium,2,Medium
+395,Nagpur Railway Stn,21.16493,79.07977,22,Clear,Junction,High,3,High
+396,Ambazari,21.11128,78.98593,11,Rain,Junction,Low,1,Medium
+397,Beltarodi,21.06676,79.02832,13,Haze,Junction,Low,5,Medium
+398,Koradi,21.23817,78.99675,22,Cloudy,City Road,Medium,5,Medium
+399,Butibori,20.98715,79.04722,1,Clear,Ring Road,High,2,Medium
+400,MIDC Hingna,21.07931,79.01001,23,Clear,Junction,Low,5,Medium
+401,Sitabuldi Junction,21.16535,79.08753,23,Clear,Highway,High,6,High
+402,Wardha Road,21.10816,79.04488,9,Rain,Highway,High,6,High
+403,Hingna T Point,21.0967,78.97507,5,Clear,Flyover,Low,2,Medium
+404,Chatrapati Square,21.12922,79.08644,21,Haze,Flyover,High,8,High
+405,Ravi Nagar,21.12056,79.0526,11,Clear,Urban,Low,2,Low
+406,Dharampeth,21.12508,79.06573,21,Clear,City Road,High,6,Medium
+407,Civil Lines,21.16373,79.07382,13,Rain,City Road,High,5,Medium
+408,Trimurti Nagar,21.13216,79.04369,0,Clear,Highway,High,2,Medium
+409,Pratap Nagar,21.09776,79.04539,4,Clear,Urban,Low,5,Medium
+410,Zero Mile,21.16352,79.09106,13,Fog,Ring Road,Medium,7,Medium
+411,Itwari,21.14069,79.10423,14,Cloudy,Urban,Low,4,Low
+412,Sadar,21.14222,79.06489,10,Clear,City Road,Low,2,Low
+413,Nandanvan,21.11961,79.11775,4,Cloudy,Highway,Low,3,Medium
+414,Mankapur,21.10015,79.04008,23,Clear,Flyover,High,4,High
+415,Nagpur Railway Stn,21.14369,79.08456,23,Rain,Flyover,Low,5,High
+416,Ambazari,21.12818,78.97094,1,Haze,City Road,Low,8,Medium
+417,Beltarodi,21.05816,79.02168,21,Rain,Junction,Medium,5,High
+418,Koradi,21.25667,79.00044,12,Rain,Junction,Medium,7,High
+419,Butibori,20.97925,79.06079,15,Clear,Junction,High,4,Medium
+420,MIDC Hingna,21.10368,79.00457,3,Rain,Highway,High,3,High
+421,Sitabuldi Junction,21.13242,79.09646,20,Rain,City Road,High,4,High
+422,Wardha Road,21.09785,79.04771,4,Clear,Junction,Low,7,Medium
+423,Hingna T Point,21.09519,78.98469,22,Clear,Junction,High,3,High
+424,Chatrapati Square,21.11045,79.09142,3,Rain,Junction,Low,4,High
+425,Ravi Nagar,21.14399,79.06846,10,Clear,Urban,High,7,Low
+426,Dharampeth,21.12298,79.07691,11,Clear,Flyover,Low,2,Low
+427,Civil Lines,21.1522,79.09575,20,Rain,City Road,Low,2,Medium
+428,Trimurti Nagar,21.12681,79.04552,9,Rain,Junction,Low,2,Medium
+429,Pratap Nagar,21.11567,79.04338,20,Clear,Junction,Medium,7,High
+430,Zero Mile,21.13003,79.08437,3,Cloudy,Urban,Low,2,Medium
+431,Itwari,21.16787,79.11745,7,Clear,City Road,Low,2,Low
+432,Sadar,21.15357,79.09195,11,Haze,Highway,Medium,4,Medium
+433,Nandanvan,21.13706,79.11204,14,Cloudy,City Road,High,3,Low
+434,Mankapur,21.13808,79.03367,15,Clear,Highway,Low,7,Low
+435,Nagpur Railway Stn,21.1274,79.08521,3,Cloudy,Flyover,Medium,0,Medium
+436,Ambazari,21.11969,78.99733,4,Haze,Highway,High,7,High
+437,Beltarodi,21.05956,79.03515,7,Haze,Ring Road,Low,3,Low
+438,Koradi,21.24778,79.00969,8,Cloudy,Junction,High,4,Medium
+439,Butibori,20.9531,79.04129,9,Haze,Junction,Low,5,Medium
+440,MIDC Hingna,21.10916,78.99683,3,Rain,Junction,Medium,2,High
+441,Sitabuldi Junction,21.16567,79.08527,1,Cloudy,City Road,Medium,6,Medium
+442,Wardha Road,21.10887,79.0605,11,Rain,Highway,High,3,Medium
+443,Hingna T Point,21.08029,78.97827,14,Rain,Flyover,Medium,5,High
+444,Chatrapati Square,21.12932,79.08637,8,Clear,Flyover,Medium,3,Medium
+445,Ravi Nagar,21.13328,79.04661,20,Cloudy,Junction,Low,1,Medium
+446,Dharampeth,21.1346,79.08708,17,Clear,Urban,High,6,Medium
+447,Civil Lines,21.1499,79.0942,23,Haze,Junction,Medium,7,High
+448,Trimurti Nagar,21.14783,79.06438,12,Rain,Highway,Medium,4,Medium
+449,Pratap Nagar,21.12495,79.04053,16,Fog,Ring Road,Medium,4,Medium
+450,Zero Mile,21.13529,79.08935,17,Clear,City Road,Medium,5,Medium
+451,Itwari,21.16967,79.09472,13,Clear,Junction,Medium,3,Medium
+452,Sadar,21.15623,79.08174,19,Clear,Junction,Medium,1,Medium
+453,Nandanvan,21.13325,79.12873,17,Cloudy,Junction,High,6,Medium
+454,Mankapur,21.11094,79.04946,7,Haze,Ring Road,Low,6,Low
+455,Nagpur Railway Stn,21.15707,79.0859,5,Clear,Flyover,Low,4,Medium
+456,Ambazari,21.13025,78.99888,11,Haze,Junction,Medium,4,Medium
+457,Beltarodi,21.07481,79.03179,1,Cloudy,Junction,High,2,High
+458,Koradi,21.25037,78.98557,3,Clear,Urban,Low,2,Low
+459,Butibori,20.97024,79.06111,5,Haze,Ring Road,High,1,Medium
+460,MIDC Hingna,21.07704,79.01465,3,Fog,Junction,Medium,5,High
+461,Sitabuldi Junction,21.13679,79.08718,21,Clear,Flyover,Low,8,High
+462,Wardha Road,21.08797,79.05186,4,Rain,Urban,Low,3,Medium
+463,Hingna T Point,21.11104,78.99232,5,Clear,City Road,Medium,2,Medium
+464,Chatrapati Square,21.10391,79.10975,21,Fog,Highway,Low,5,High
+465,Ravi Nagar,21.11927,79.06098,18,Clear,City Road,Low,3,Low
+466,Dharampeth,21.11534,79.06547,20,Clear,Urban,Medium,4,Medium
+467,Civil Lines,21.15817,79.10493,1,Haze,City Road,Medium,5,Medium
+468,Trimurti Nagar,21.15101,79.0673,10,Fog,Flyover,High,5,High
+469,Pratap Nagar,21.13214,79.05764,10,Rain,Junction,Medium,3,Medium
+470,Zero Mile,21.13992,79.09428,11,Rain,Ring Road,Medium,7,Low
+471,Itwari,21.14759,79.09805,15,Clear,City Road,High,3,Low
+472,Sadar,21.15913,79.08186,13,Haze,Highway,Medium,4,Medium
+473,Nandanvan,21.11228,79.12351,13,Rain,Highway,Medium,3,Medium
+474,Mankapur,21.11042,79.05354,7,Clear,City Road,Low,6,Low
+475,Nagpur Railway Stn,21.16441,79.09013,7,Fog,Urban,Low,2,Medium
+476,Ambazari,21.13282,79.00167,19,Clear,Highway,Medium,2,Medium
+477,Beltarodi,21.07849,79.01704,21,Fog,Flyover,Low,3,High
+478,Koradi,21.26685,79.01904,21,Fog,Junction,Medium,0,High
+479,Butibori,20.96792,79.04622,3,Haze,Junction,Medium,3,High
+480,MIDC Hingna,21.10515,78.98787,9,Clear,Ring Road,High,3,Low
+481,Sitabuldi Junction,21.13155,79.07239,15,Fog,Ring Road,Low,5,Low
+482,Wardha Road,21.07667,79.07695,18,Cloudy,Junction,Low,2,Medium
+483,Hingna T Point,21.10042,78.96562,20,Clear,Junction,Medium,2,Medium
+484,Chatrapati Square,21.13598,79.0861,13,Clear,Junction,Low,3,Low
+485,Ravi Nagar,21.12511,79.03769,8,Cloudy,Ring Road,Medium,7,Low
+486,Dharampeth,21.12831,79.05382,8,Clear,Junction,Low,4,Medium
+487,Civil Lines,21.16479,79.10497,6,Clear,Urban,Medium,2,Low
+488,Trimurti Nagar,21.15021,79.06754,5,Clear,Highway,Medium,2,Medium
+489,Pratap Nagar,21.13426,79.05719,12,Haze,Junction,Low,3,Medium
+490,Zero Mile,21.13102,79.09083,18,Clear,Ring Road,High,2,Medium
+491,Itwari,21.14291,79.10449,1,Clear,Highway,Medium,3,Medium
+492,Sadar,21.13607,79.06504,2,Haze,City Road,High,7,High
+493,Nandanvan,21.12374,79.10076,13,Fog,Highway,Medium,5,Medium
+494,Mankapur,21.11691,79.04872,18,Clear,Junction,Medium,2,Medium
+495,Nagpur Railway Stn,21.14981,79.09456,18,Cloudy,Highway,High,3,Medium
+496,Ambazari,21.12406,78.97453,0,Rain,Junction,High,3,High
+497,Beltarodi,21.08809,79.03132,1,Haze,Flyover,Medium,5,High
+498,Koradi,21.2421,78.98203,2,Fog,Flyover,Medium,3,High
+499,Butibori,20.95438,79.06863,19,Rain,Ring Road,High,2,Medium
+500,MIDC Hingna,21.08651,78.98402,19,Haze,Ring Road,Low,2,Low
+501,Sitabuldi Junction,21.13517,79.06899,8,Clear,Junction,High,4,Medium
+502,Wardha Road,21.07486,79.06532,9,Clear,Urban,Low,7,Low
+503,Hingna T Point,21.1122,78.99401,17,Rain,Urban,High,7,Medium
+504,Chatrapati Square,21.11081,79.10315,8,Haze,Junction,Medium,6,Medium
+505,Ravi Nagar,21.13646,79.0694,2,Clear,City Road,Medium,7,Medium
+506,Dharampeth,21.14215,79.08271,18,Fog,Junction,High,3,High
+507,Civil Lines,21.1499,79.06908,20,Haze,Junction,High,6,High
+508,Trimurti Nagar,21.13007,79.06266,22,Clear,City Road,Medium,5,Medium
+509,Pratap Nagar,21.11077,79.06593,4,Clear,Highway,Low,6,Medium
+510,Zero Mile,21.16358,79.09664,6,Clear,Flyover,Medium,2,Medium
+511,Itwari,21.14455,79.09963,18,Clear,Urban,Medium,2,Low
+512,Sadar,21.14004,79.07961,16,Clear,Highway,Medium,5,Medium
+513,Nandanvan,21.13733,79.10734,19,Fog,Junction,Medium,6,High
+514,Mankapur,21.10495,79.04333,23,Clear,Highway,Low,2,Medium
+515,Nagpur Railway Stn,21.1379,79.07105,19,Rain,Highway,High,4,High
+516,Ambazari,21.11049,78.98572,10,Rain,Urban,Medium,1,Medium
+517,Beltarodi,21.08974,79.017,17,Clear,Flyover,Medium,5,Medium
+518,Koradi,21.25973,79.00893,11,Rain,Junction,Low,1,Medium
+519,Butibori,20.95247,79.048,18,Fog,City Road,High,0,Medium
+520,MIDC Hingna,21.10542,78.9804,18,Rain,City Road,Medium,3,Medium
+521,Sitabuldi Junction,21.13769,79.07363,11,Clear,Junction,Medium,2,Medium
+522,Wardha Road,21.09555,79.04565,17,Clear,Junction,Low,1,Medium
+523,Hingna T Point,21.08205,78.97986,17,Cloudy,Junction,Low,4,Medium
+524,Chatrapati Square,21.12313,79.07571,12,Fog,Junction,High,2,Medium
+525,Ravi Nagar,21.15145,79.05716,4,Cloudy,Urban,Low,3,Medium
+526,Dharampeth,21.14028,79.07427,14,Rain,Flyover,Medium,6,Medium
+527,Civil Lines,21.1687,79.09192,15,Clear,Junction,Low,4,Low
+528,Trimurti Nagar,21.13712,79.05353,13,Clear,Junction,High,5,Medium
+529,Pratap Nagar,21.12549,79.06054,1,Haze,Junction,Medium,5,High
+530,Zero Mile,21.15598,79.10618,0,Rain,Junction,Low,2,High
+531,Itwari,21.15721,79.11232,14,Clear,Flyover,High,3,Medium
+532,Sadar,21.13808,79.08378,5,Rain,City Road,Low,7,High
+533,Nandanvan,21.12262,79.1273,20,Clear,Urban,High,2,Medium
+534,Mankapur,21.1076,79.03843,9,Clear,Junction,High,4,Medium
+535,Nagpur Railway Stn,21.15429,79.06529,11,Clear,City Road,Medium,3,Low
+536,Ambazari,21.14034,79.00554,11,Clear,Junction,High,5,Medium
+537,Beltarodi,21.08649,79.01837,1,Rain,City Road,Medium,4,High
+538,Koradi,21.23695,79.00761,12,Fog,City Road,High,1,Medium
+539,Butibori,20.97774,79.06963,18,Clear,City Road,Medium,4,Medium
+540,MIDC Hingna,21.08655,78.99197,15,Rain,Flyover,Medium,8,Medium
+541,Sitabuldi Junction,21.146,79.10773,3,Clear,Highway,High,3,High
+542,Wardha Road,21.07723,79.06939,10,Clear,Highway,Medium,4,Medium
+543,Hingna T Point,21.08084,78.98891,9,Cloudy,City Road,High,3,Low
+544,Chatrapati Square,21.10429,79.07641,18,Clear,Junction,High,4,Medium
+545,Ravi Nagar,21.14244,79.07295,22,Haze,Junction,Medium,1,High
+546,Dharampeth,21.12796,79.08186,9,Rain,Urban,High,4,Medium
+547,Civil Lines,21.1569,79.0654,8,Fog,Ring Road,Medium,2,Medium
+548,Trimurti Nagar,21.15324,79.03753,5,Clear,Highway,Medium,3,High
+549,Pratap Nagar,21.0982,79.05098,16,Haze,Junction,Medium,1,Medium
+550,Zero Mile,21.16116,79.06882,10,Clear,Urban,Low,4,Low
+551,Itwari,21.14047,79.12114,10,Rain,Junction,High,4,High
+552,Sadar,21.13912,79.09831,11,Fog,Junction,Medium,3,Medium
+553,Nandanvan,21.13011,79.10578,18,Fog,Flyover,Medium,5,High
+554,Mankapur,21.13044,79.04852,10,Clear,City Road,Medium,0,Low
+555,Nagpur Railway Stn,21.14015,79.09288,16,Clear,Urban,High,2,Low
+556,Ambazari,21.12145,79.00632,12,Fog,Highway,High,6,High
+557,Beltarodi,21.06207,79.02536,2,Cloudy,Ring Road,High,3,Medium
+558,Koradi,21.26228,79.00093,16,Fog,Highway,Low,5,Medium
+559,Butibori,20.97691,79.05122,9,Clear,Flyover,High,2,Medium
+560,MIDC Hingna,21.09163,79.01273,8,Clear,Highway,Medium,3,Medium
+561,Sitabuldi Junction,21.13603,79.08448,3,Clear,Junction,Medium,6,High
+562,Wardha Road,21.1046,79.05282,1,Cloudy,Urban,Medium,7,Medium
+563,Hingna T Point,21.09436,78.99233,23,Rain,City Road,Medium,1,Medium
+564,Chatrapati Square,21.11433,79.10741,20,Fog,Flyover,High,3,High
+565,Ravi Nagar,21.14509,79.03571,4,Clear,Flyover,Medium,3,High
+566,Dharampeth,21.12136,79.06929,4,Rain,Highway,Low,5,High
+567,Civil Lines,21.16394,79.07569,18,Rain,City Road,Medium,1,Medium
+568,Trimurti Nagar,21.14251,79.03723,18,Fog,Ring Road,Low,5,Medium
+569,Pratap Nagar,21.11396,79.03216,4,Rain,Flyover,High,2,High
+570,Zero Mile,21.13572,79.10514,10,Haze,Highway,Low,2,Medium
+571,Itwari,21.14477,79.11972,0,Cloudy,Urban,Medium,7,Medium
+572,Sadar,21.1692,79.08306,8,Clear,Ring Road,Medium,3,Low
+573,Nandanvan,21.11628,79.1006,13,Rain,City Road,Low,3,Medium
+574,Mankapur,21.11641,79.03332,17,Rain,Junction,Medium,7,High
+575,Nagpur Railway Stn,21.13032,79.07378,19,Rain,Highway,Medium,3,Medium
+576,Ambazari,21.10858,78.99596,2,Rain,Urban,High,4,High
+577,Beltarodi,21.0662,79.04726,15,Rain,Junction,Low,9,Medium
+578,Koradi,21.25682,78.99155,12,Rain,Highway,High,2,Medium
+579,Butibori,20.97396,79.03287,19,Haze,Junction,Low,2,Medium
+580,MIDC Hingna,21.09512,78.99101,14,Haze,Ring Road,High,1,Low
+581,Sitabuldi Junction,21.13636,79.0853,7,Fog,Highway,Low,5,Medium
+582,Wardha Road,21.07039,79.043,20,Clear,Highway,Low,4,Medium
+583,Hingna T Point,21.11603,78.9972,3,Rain,Ring Road,High,2,Medium
+584,Chatrapati Square,21.13485,79.10025,14,Cloudy,City Road,Low,4,Low
+585,Ravi Nagar,21.13017,79.07143,2,Clear,Junction,Low,6,Medium
+586,Dharampeth,21.12127,79.07888,7,Clear,Flyover,High,5,Medium
+587,Civil Lines,21.16229,79.07723,5,Fog,City Road,Low,2,Medium
+588,Trimurti Nagar,21.1603,79.0288,8,Cloudy,Urban,Low,3,Low
+589,Pratap Nagar,21.13376,79.06932,1,Clear,Ring Road,Low,5,Low
+590,Zero Mile,21.12863,79.08413,17,Clear,Junction,High,4,Medium
+591,Itwari,21.15083,79.1001,21,Clear,Junction,Medium,3,Medium
+592,Sadar,21.1399,79.06464,4,Rain,City Road,Low,2,Medium
+593,Nandanvan,21.12384,79.13344,13,Cloudy,Highway,Medium,5,Low
+594,Mankapur,21.10314,79.03426,22,Clear,Junction,Low,5,High
+595,Nagpur Railway Stn,21.14407,79.09954,19,Clear,Urban,Medium,4,Medium
+596,Ambazari,21.14371,78.97243,17,Haze,Junction,High,3,High
+597,Beltarodi,21.08598,79.04643,2,Fog,Junction,Low,6,High
+598,Koradi,21.26698,79.00087,15,Clear,Highway,Medium,4,Medium
+599,Butibori,20.96731,79.04937,7,Rain,City Road,Low,5,Medium
+600,MIDC Hingna,21.10693,79.00757,18,Clear,Urban,Medium,2,Low
+601,Sitabuldi Junction,21.15236,79.08932,16,Clear,Highway,Medium,7,Medium
+602,Wardha Road,21.07043,79.06804,6,Fog,Junction,Low,4,Medium
+603,Hingna T Point,21.1178,78.97131,22,Haze,Junction,Medium,3,High
+604,Chatrapati Square,21.13149,79.08569,7,Fog,Junction,Medium,6,Medium
+605,Ravi Nagar,21.14782,79.05837,2,Fog,Flyover,Medium,2,High
+606,Dharampeth,21.14439,79.06833,18,Rain,City Road,Medium,6,Medium
+607,Civil Lines,21.14499,79.10426,23,Haze,Flyover,Medium,4,High
+608,Trimurti Nagar,21.1452,79.03506,12,Cloudy,Urban,Low,6,Low
+609,Pratap Nagar,21.11463,79.04954,6,Cloudy,Highway,Low,5,Low
+610,Zero Mile,21.15067,79.09023,18,Rain,Urban,Medium,3,Medium
+611,Itwari,21.13817,79.0989,16,Haze,Ring Road,High,2,Medium
+612,Sadar,21.15158,79.07268,9,Rain,Highway,Medium,6,Medium
+613,Nandanvan,21.14929,79.13932,5,Clear,City Road,Medium,5,Medium
+614,Mankapur,21.13224,79.02317,20,Rain,Highway,Low,1,High
+615,Nagpur Railway Stn,21.14316,79.09554,14,Clear,Highway,Medium,2,Medium
+616,Ambazari,21.12656,78.9911,0,Fog,City Road,Low,2,Medium
+617,Beltarodi,21.06396,79.04865,7,Haze,City Road,Medium,4,Low
+618,Koradi,21.26157,78.98125,8,Clear,Highway,Low,4,Low
+619,Butibori,20.96283,79.06471,13,Rain,Urban,Low,0,Low
+620,MIDC Hingna,21.07858,79.00953,11,Rain,City Road,High,1,Medium
+621,Sitabuldi Junction,21.14714,79.10596,11,Rain,Junction,High,4,High
+622,Wardha Road,21.09478,79.06702,3,Cloudy,Highway,Medium,1,Medium
+623,Hingna T Point,21.09815,78.98162,15,Haze,Highway,Low,6,Medium
+624,Chatrapati Square,21.11242,79.092,4,Clear,Urban,Low,4,Medium
+625,Ravi Nagar,21.12802,79.03879,12,Clear,Junction,Medium,3,Medium
+626,Dharampeth,21.13357,79.0724,15,Clear,Highway,High,1,Medium
+627,Civil Lines,21.14818,79.07954,20,Clear,Junction,High,2,High
+628,Trimurti Nagar,21.14235,79.04223,3,Rain,City Road,Medium,1,High
+629,Pratap Nagar,21.1226,79.04762,0,Cloudy,City Road,Medium,2,Medium
+630,Zero Mile,21.13354,79.08487,20,Clear,City Road,Medium,4,Medium
+631,Itwari,21.16794,79.11943,11,Cloudy,City Road,High,0,Low
+632,Sadar,21.14101,79.08546,15,Fog,City Road,Low,3,Medium
+633,Nandanvan,21.14474,79.13338,8,Clear,Highway,High,5,Medium
+634,Mankapur,21.11593,79.03989,18,Fog,Highway,High,2,High
+635,Nagpur Railway Stn,21.15456,79.07498,9,Clear,City Road,Low,1,Low
+636,Ambazari,21.12918,79.00374,1,Rain,Ring Road,Medium,3,Medium
+637,Beltarodi,21.08535,79.03246,23,Fog,City Road,High,6,High
+638,Koradi,21.23957,79.01148,7,Cloudy,Ring Road,Low,3,Low
+639,Butibori,20.95595,79.04825,2,Clear,Urban,Medium,7,Medium
+640,MIDC Hingna,21.09364,79.01957,20,Cloudy,Highway,Medium,2,Medium
+641,Sitabuldi Junction,21.13601,79.09523,9,Haze,City Road,Low,4,Low
+642,Wardha Road,21.08398,79.05171,12,Clear,City Road,High,1,Low
+643,Hingna T Point,21.1173,78.97952,11,Clear,Flyover,Low,5,Low
+644,Chatrapati Square,21.12483,79.09287,19,Fog,Highway,High,5,High
+645,Ravi Nagar,21.13821,79.07116,8,Cloudy,Urban,High,3,Low
+646,Dharampeth,21.13554,79.05202,17,Cloudy,Flyover,High,7,High
+647,Civil Lines,21.16203,79.08454,4,Haze,Highway,High,5,High
+648,Trimurti Nagar,21.14728,79.06376,16,Rain,Flyover,High,3,High
+649,Pratap Nagar,21.09789,79.0379,12,Clear,Highway,Low,3,Low
+650,Zero Mile,21.13246,79.1016,21,Rain,Flyover,High,2,High
+651,Itwari,21.17311,79.10231,22,Fog,Urban,Medium,5,High
+652,Sadar,21.15349,79.08352,23,Rain,Ring Road,Medium,3,High
+653,Nandanvan,21.13372,79.13744,2,Clear,Urban,High,3,Medium
+654,Mankapur,21.12242,79.04779,8,Rain,Flyover,High,3,High
+655,Nagpur Railway Stn,21.14379,79.0679,6,Clear,City Road,High,2,Low
+656,Ambazari,21.1135,78.97369,4,Clear,Urban,Low,2,Low
+657,Beltarodi,21.08658,79.01835,15,Haze,Junction,Low,4,Medium
+658,Koradi,21.25967,78.99211,7,Clear,City Road,Low,4,Low
+659,Butibori,20.98745,79.06467,0,Clear,Highway,High,7,High
+660,MIDC Hingna,21.08298,78.99337,6,Fog,Highway,Medium,4,Medium
+661,Sitabuldi Junction,21.1599,79.08821,22,Fog,City Road,High,5,High
+662,Wardha Road,21.10747,79.04658,20,Rain,City Road,Low,3,Medium
+663,Hingna T Point,21.08957,78.97661,11,Clear,Highway,High,5,Medium
+664,Chatrapati Square,21.11697,79.1042,18,Clear,Highway,Low,6,Medium
+665,Ravi Nagar,21.1233,79.07123,20,Cloudy,Ring Road,Low,3,Medium
+666,Dharampeth,21.14466,79.05133,16,Rain,Highway,Low,4,Medium
+667,Civil Lines,21.13421,79.07293,12,Clear,Highway,Medium,5,Medium
+668,Trimurti Nagar,21.15857,79.02928,23,Fog,Highway,High,3,High
+669,Pratap Nagar,21.11055,79.04864,8,Clear,City Road,High,0,Low
+670,Zero Mile,21.12921,79.09591,10,Clear,City Road,Medium,7,Low
+671,Itwari,21.15749,79.11643,2,Cloudy,Urban,Medium,4,Medium
+672,Sadar,21.14775,79.10018,5,Fog,Highway,Medium,5,High
+673,Nandanvan,21.13039,79.12341,21,Clear,Ring Road,Low,7,Medium
+674,Mankapur,21.13875,79.05968,5,Cloudy,Junction,Medium,3,Medium
+675,Nagpur Railway Stn,21.15267,79.09826,9,Haze,Highway,High,2,Medium
+676,Ambazari,21.1174,78.97061,10,Clear,Flyover,Medium,3,Medium
+677,Beltarodi,21.07927,79.03837,18,Cloudy,Ring Road,Medium,3,Low
+678,Koradi,21.24096,78.99259,4,Clear,Urban,Low,7,Medium
+679,Butibori,20.98284,79.03369,8,Haze,City Road,Low,4,Low
+680,MIDC Hingna,21.10576,78.99991,1,Cloudy,Highway,Medium,5,Medium
+681,Sitabuldi Junction,21.12818,79.09264,2,Clear,City Road,Medium,2,Medium
+682,Wardha Road,21.10892,79.07919,18,Clear,Junction,High,3,Medium
+683,Hingna T Point,21.1061,78.99095,17,Cloudy,Junction,High,5,High
+684,Chatrapati Square,21.13913,79.07569,18,Clear,Junction,Medium,4,Medium
+685,Ravi Nagar,21.13444,79.04755,6,Clear,Highway,Medium,6,Low
+686,Dharampeth,21.1249,79.05921,16,Cloudy,Urban,High,5,Medium
+687,Civil Lines,21.14745,79.10318,5,Clear,Highway,High,3,High
+688,Trimurti Nagar,21.14431,79.04124,6,Haze,Highway,Low,4,Medium
+689,Pratap Nagar,21.09501,79.03708,1,Fog,Junction,Low,3,High
+690,Zero Mile,21.14205,79.10615,3,Clear,Urban,Medium,3,Medium
+691,Itwari,21.14238,79.09342,21,Rain,Flyover,Medium,1,High
+692,Sadar,21.15878,79.0767,14,Clear,City Road,High,3,Low
+693,Nandanvan,21.14947,79.12477,10,Fog,City Road,Medium,4,Medium
+694,Mankapur,21.13473,79.03179,17,Clear,Junction,Medium,4,Medium
+695,Nagpur Railway Stn,21.1417,79.0784,10,Clear,Ring Road,Low,3,Low
+696,Ambazari,21.14364,78.97374,16,Rain,Urban,Medium,3,Medium
+697,Beltarodi,21.08043,79.01063,9,Fog,Highway,Low,1,Medium
+698,Koradi,21.2339,79.01591,11,Rain,City Road,Medium,4,Medium
+699,Butibori,20.96297,79.03444,0,Clear,City Road,High,2,Medium
+700,MIDC Hingna,21.08647,78.99332,20,Fog,Urban,Medium,3,Medium
+701,Sitabuldi Junction,21.13891,79.07661,4,Rain,Urban,Low,5,Medium
+702,Wardha Road,21.07279,79.06356,11,Clear,Flyover,Low,5,Medium
+703,Hingna T Point,21.11187,78.9651,8,Fog,Junction,Low,2,Medium
+704,Chatrapati Square,21.13135,79.10876,9,Clear,City Road,High,2,Low
+705,Ravi Nagar,21.11999,79.05845,2,Haze,Urban,Low,1,Medium
+706,Dharampeth,21.1342,79.06583,21,Clear,Highway,Medium,3,Medium
+707,Civil Lines,21.15374,79.09347,22,Rain,Junction,Low,1,High
+708,Trimurti Nagar,21.1435,79.0594,20,Cloudy,Junction,High,9,High
+709,Pratap Nagar,21.09892,79.04945,10,Clear,Junction,Low,0,Low
+710,Zero Mile,21.14743,79.06967,15,Clear,Flyover,Medium,2,Medium
+711,Itwari,21.15368,79.11094,23,Clear,Junction,Medium,5,High
+712,Sadar,21.15379,79.06397,2,Rain,Highway,Low,3,High
+713,Nandanvan,21.14837,79.12863,16,Clear,City Road,High,2,Low
+714,Mankapur,21.1333,79.05403,8,Clear,City Road,Medium,6,Low
+715,Nagpur Railway Stn,21.13189,79.08787,4,Clear,City Road,Medium,4,Medium
+716,Ambazari,21.14126,78.97052,13,Fog,Ring Road,Medium,3,Medium
+717,Beltarodi,21.0608,79.01827,21,Rain,Junction,High,3,High
+718,Koradi,21.26586,79.00545,8,Rain,Highway,Medium,4,Medium
+719,Butibori,20.97081,79.0418,18,Rain,Ring Road,Low,6,Medium
+720,MIDC Hingna,21.10128,78.98623,5,Clear,Junction,Low,4,Medium
+721,Sitabuldi Junction,21.12652,79.10557,21,Rain,Junction,Medium,1,High
+722,Wardha Road,21.08264,79.05698,3,Cloudy,Junction,Medium,5,High
+723,Hingna T Point,21.08194,78.96594,14,Fog,Ring Road,Medium,6,Medium
+724,Chatrapati Square,21.122,79.076,20,Haze,City Road,High,3,Medium
+725,Ravi Nagar,21.12207,79.04641,8,Rain,Highway,Medium,3,Medium
+726,Dharampeth,21.11383,79.08658,20,Rain,Flyover,Medium,7,High
+727,Civil Lines,21.17062,79.09235,12,Rain,Junction,Low,4,Medium
+728,Trimurti Nagar,21.13647,79.03874,19,Rain,City Road,High,4,High
+729,Pratap Nagar,21.09575,79.06419,2,Haze,Highway,Medium,3,High
+730,Zero Mile,21.14232,79.10389,22,Cloudy,Urban,Medium,2,Medium
+731,Itwari,21.1653,79.09119,12,Rain,City Road,Medium,5,Low
+732,Sadar,21.1309,79.06774,9,Cloudy,Highway,High,5,Medium
+733,Nandanvan,21.14578,79.1217,0,Cloudy,City Road,High,5,Medium
+734,Mankapur,21.1106,79.04145,12,Clear,Flyover,High,5,Medium
+735,Nagpur Railway Stn,21.16178,79.08079,1,Clear,Ring Road,Medium,5,Medium
+736,Ambazari,21.12857,78.99165,9,Cloudy,Highway,Medium,1,Low
+737,Beltarodi,21.05137,79.01681,5,Clear,Urban,Low,1,Medium
+738,Koradi,21.25425,79.00095,9,Rain,Junction,Medium,8,High
+739,Butibori,20.97018,79.05976,9,Fog,Highway,Low,8,Medium
+740,MIDC Hingna,21.07126,78.99034,14,Fog,Junction,Medium,5,Medium
+741,Sitabuldi Junction,21.13284,79.09793,15,Rain,Highway,High,5,Medium
+742,Wardha Road,21.09363,79.06397,7,Rain,Highway,High,2,Medium
+743,Hingna T Point,21.10832,78.98992,22,Clear,Junction,High,2,High
+744,Chatrapati Square,21.13274,79.08523,21,Cloudy,Flyover,Medium,5,High
+745,Ravi Nagar,21.13725,79.05146,19,Clear,Flyover,High,2,Medium
+746,Dharampeth,21.12743,79.06809,22,Fog,Highway,Low,5,High
+747,Civil Lines,21.14814,79.07048,22,Rain,Urban,Low,3,Medium
+748,Trimurti Nagar,21.15511,79.03928,14,Rain,Junction,High,3,High
+749,Pratap Nagar,21.10929,79.05508,13,Cloudy,Junction,Low,4,Medium
+750,Zero Mile,21.14757,79.10128,2,Clear,City Road,Medium,4,Medium
+751,Itwari,21.13977,79.10414,20,Clear,Highway,High,3,High
+752,Sadar,21.16999,79.0874,1,Rain,Junction,Low,2,High
+753,Nandanvan,21.13488,79.12023,9,Haze,City Road,Low,3,Low
+754,Mankapur,21.10394,79.05667,7,Cloudy,Flyover,High,6,Medium
+755,Nagpur Railway Stn,21.15349,79.09399,10,Clear,Highway,Medium,3,Medium
+756,Ambazari,21.13034,78.98941,11,Rain,Highway,Low,3,Medium
+757,Beltarodi,21.05863,79.01335,7,Rain,Junction,High,8,High
+758,Koradi,21.25461,79.01312,16,Rain,Flyover,Medium,2,Medium
+759,Butibori,20.95824,79.0359,5,Fog,Junction,Medium,3,High
+760,MIDC Hingna,21.10456,79.01126,19,Clear,Flyover,Medium,5,Medium
+761,Sitabuldi Junction,21.13871,79.094,12,Clear,City Road,Low,1,Low
+762,Wardha Road,21.08702,79.06198,4,Clear,Highway,High,7,High
+763,Hingna T Point,21.1055,78.98214,3,Rain,Highway,Low,5,High
+764,Chatrapati Square,21.11956,79.08694,11,Fog,Highway,High,4,High
+765,Ravi Nagar,21.14909,79.05737,11,Haze,Urban,Medium,2,Low
+766,Dharampeth,21.11209,79.06014,15,Clear,City Road,Medium,3,Low
+767,Civil Lines,21.13658,79.10488,5,Clear,Flyover,Low,5,High
+768,Trimurti Nagar,21.13347,79.03381,6,Clear,Urban,Medium,5,Low
+769,Pratap Nagar,21.13267,79.06045,7,Rain,Highway,Medium,7,Medium
+770,Zero Mile,21.1464,79.06882,13,Clear,Ring Road,High,4,Low
+771,Itwari,21.16763,79.11299,8,Cloudy,Highway,Medium,5,Medium
+772,Sadar,21.14982,79.08939,2,Cloudy,Highway,Low,5,Medium
+773,Nandanvan,21.14722,79.13199,14,Clear,City Road,High,5,Low
+774,Mankapur,21.13944,79.05751,5,Clear,Urban,High,5,Medium
+775,Nagpur Railway Stn,21.15774,79.084,11,Clear,Highway,Medium,10,Medium
+776,Ambazari,21.12269,78.98567,15,Rain,City Road,Medium,5,Low
+777,Beltarodi,21.05433,79.04733,1,Cloudy,Junction,Medium,5,High
+778,Koradi,21.24084,79.01422,13,Rain,Ring Road,High,3,Medium
+779,Butibori,20.97688,79.04838,10,Fog,City Road,Medium,2,Medium
+780,MIDC Hingna,21.10735,79.01239,23,Fog,Junction,High,2,High
+781,Sitabuldi Junction,21.15748,79.09152,5,Clear,Urban,High,7,High
+782,Wardha Road,21.1016,79.06538,4,Rain,Urban,Low,4,Medium
+783,Hingna T Point,21.10938,78.97469,9,Rain,City Road,Low,7,Medium
+784,Chatrapati Square,21.13414,79.09564,5,Fog,Highway,Low,1,High
+785,Ravi Nagar,21.12928,79.07458,20,Clear,Highway,Low,6,Medium
+786,Dharampeth,21.12186,79.06121,7,Clear,City Road,Medium,3,Low
+787,Civil Lines,21.17187,79.10073,13,Clear,Urban,High,1,Low
+788,Trimurti Nagar,21.14695,79.04953,3,Haze,Urban,Low,6,Medium
+789,Pratap Nagar,21.09606,79.06365,20,Rain,Urban,Medium,0,Medium
+790,Zero Mile,21.14025,79.07819,20,Cloudy,City Road,High,3,Medium
+791,Itwari,21.15629,79.08417,5,Fog,City Road,High,6,High
+792,Sadar,21.15561,79.10034,15,Cloudy,Junction,Medium,6,Medium
+793,Nandanvan,21.13243,79.10914,1,Fog,Highway,Medium,6,High
+794,Mankapur,21.10776,79.03139,22,Clear,Junction,High,6,High
+795,Nagpur Railway Stn,21.14847,79.09116,18,Cloudy,Flyover,Low,4,Medium
+796,Ambazari,21.13891,78.99589,17,Clear,Junction,Low,4,Medium
+797,Beltarodi,21.06953,79.0109,17,Rain,Ring Road,High,3,Medium
+798,Koradi,21.23384,78.99188,9,Clear,Flyover,Low,1,Low
+799,Butibori,20.9711,79.0507,3,Clear,City Road,Low,4,Low
+800,MIDC Hingna,21.07238,78.99093,4,Clear,City Road,Medium,4,Medium
+801,Sitabuldi Junction,21.14123,79.09677,6,Rain,Urban,High,3,Medium
+802,Wardha Road,21.07756,79.07438,15,Rain,City Road,Low,6,Low
+803,Hingna T Point,21.11253,78.99819,9,Rain,Flyover,Medium,2,Medium
+804,Chatrapati Square,21.11313,79.09885,18,Fog,Highway,High,3,High
+805,Ravi Nagar,21.14717,79.07097,4,Haze,Flyover,Low,1,High
+806,Dharampeth,21.14328,79.07287,22,Clear,Junction,Medium,4,Medium
+807,Civil Lines,21.15636,79.07653,16,Rain,Highway,High,5,Medium
+808,Trimurti Nagar,21.15069,79.03904,4,Clear,Ring Road,Low,3,Medium
+809,Pratap Nagar,21.11174,79.04963,21,Rain,Highway,Medium,5,High
+810,Zero Mile,21.13781,79.09906,8,Fog,City Road,Low,1,Low
+811,Itwari,21.14774,79.1069,17,Clear,Highway,Medium,4,Medium
+812,Sadar,21.14391,79.08613,19,Rain,Urban,Medium,4,Medium
+813,Nandanvan,21.12349,79.12872,3,Rain,Flyover,Medium,1,High
+814,Mankapur,21.10614,79.03685,16,Clear,Junction,High,2,Medium
+815,Nagpur Railway Stn,21.15742,79.07411,23,Rain,City Road,High,5,High
+816,Ambazari,21.14254,78.97347,6,Fog,Urban,High,4,Medium
+817,Beltarodi,21.06548,79.03251,0,Cloudy,Urban,Low,3,Medium
+818,Koradi,21.25659,78.99145,18,Rain,Flyover,Low,3,Medium
+819,Butibori,20.96665,79.06332,2,Cloudy,Ring Road,Medium,4,Medium
+820,MIDC Hingna,21.10482,78.99437,6,Clear,City Road,Medium,9,Low
+821,Sitabuldi Junction,21.149,79.10612,23,Clear,Urban,Low,5,Medium
+822,Wardha Road,21.10849,79.05849,6,Rain,Highway,High,2,Medium
+823,Hingna T Point,21.10092,78.96458,13,Clear,Junction,Low,3,Low
+824,Chatrapati Square,21.11854,79.0892,0,Cloudy,Urban,Low,4,Medium
+825,Ravi Nagar,21.14374,79.0658,13,Clear,Flyover,Low,3,Low
+826,Dharampeth,21.11554,79.07993,9,Fog,Urban,Low,4,Low
+827,Civil Lines,21.15838,79.07897,11,Clear,Flyover,Medium,6,Medium
+828,Trimurti Nagar,21.15574,79.03687,13,Clear,Junction,High,2,Medium
+829,Pratap Nagar,21.12429,79.04622,11,Clear,Junction,Low,2,Medium
+830,Zero Mile,21.14306,79.09935,7,Fog,Urban,High,3,Medium
+831,Itwari,21.1386,79.09131,17,Rain,Ring Road,Medium,7,Medium
+832,Sadar,21.16135,79.10016,12,Rain,Junction,Medium,5,Medium
+833,Nandanvan,21.12842,79.11458,17,Fog,City Road,High,6,High
+834,Mankapur,21.10997,79.04875,3,Fog,Urban,High,7,High
+835,Nagpur Railway Stn,21.14061,79.08864,4,Haze,Junction,Low,8,High
+836,Ambazari,21.12241,78.98396,17,Clear,Ring Road,Medium,6,Medium
+837,Beltarodi,21.05821,79.03849,8,Fog,Ring Road,High,2,Medium
+838,Koradi,21.25219,78.99692,5,Clear,City Road,Low,2,Low
+839,Butibori,20.95801,79.06962,1,Rain,Ring Road,Low,3,Medium
+840,MIDC Hingna,21.08492,78.98595,17,Fog,Junction,High,3,High
+841,Sitabuldi Junction,21.14466,79.07419,20,Haze,Highway,High,4,High
+842,Wardha Road,21.0878,79.07998,13,Clear,Junction,Low,6,Medium
+843,Hingna T Point,21.08796,78.96319,8,Cloudy,Highway,Medium,6,Medium
+844,Chatrapati Square,21.12741,79.09059,23,Fog,Highway,Low,4,High
+845,Ravi Nagar,21.13899,79.0421,19,Cloudy,Highway,Medium,7,Medium
+846,Dharampeth,21.12941,79.08321,13,Clear,Junction,High,3,Medium
+847,Civil Lines,21.15534,79.10291,22,Clear,City Road,Medium,5,Medium
+848,Trimurti Nagar,21.13205,79.05229,14,Cloudy,Junction,High,5,Medium
+849,Pratap Nagar,21.10208,79.03314,18,Cloudy,Junction,Medium,7,Medium
+850,Zero Mile,21.14639,79.10662,7,Rain,Junction,Low,4,Medium
+851,Itwari,21.16836,79.10597,1,Cloudy,Urban,Medium,3,Medium
+852,Sadar,21.14394,79.06881,7,Rain,Junction,Medium,5,Medium
+853,Nandanvan,21.13725,79.13009,21,Rain,Highway,Low,2,High
+854,Mankapur,21.11348,79.02516,1,Cloudy,Flyover,High,1,High
+855,Nagpur Railway Stn,21.14257,79.09529,6,Clear,Highway,Low,5,Medium
+856,Ambazari,21.11715,78.99059,16,Fog,Highway,Medium,5,Medium
+857,Beltarodi,21.05143,79.03818,22,Fog,Ring Road,Medium,4,Medium
+858,Koradi,21.26961,79.00732,13,Clear,Urban,High,2,Low
+859,Butibori,20.97269,79.05214,21,Fog,Junction,High,7,High
+860,MIDC Hingna,21.08121,78.98212,12,Rain,Ring Road,Medium,7,Medium
+861,Sitabuldi Junction,21.12715,79.09518,7,Rain,Highway,Medium,4,Medium
+862,Wardha Road,21.07737,79.04259,14,Clear,City Road,Medium,3,Low
+863,Hingna T Point,21.0875,78.96087,17,Fog,City Road,Medium,5,Medium
+864,Chatrapati Square,21.10738,79.08732,0,Clear,Flyover,Low,5,Medium
+865,Ravi Nagar,21.12666,79.04632,9,Rain,Ring Road,High,10,Medium
+866,Dharampeth,21.1305,79.06322,4,Haze,Highway,Low,4,Medium
+867,Civil Lines,21.14267,79.10368,14,Rain,Urban,Medium,5,Low
+868,Trimurti Nagar,21.13352,79.03884,19,Cloudy,Junction,High,8,High
+869,Pratap Nagar,21.11305,79.04737,12,Fog,Urban,High,2,Medium
+870,Zero Mile,21.15035,79.09962,9,Cloudy,Urban,Medium,2,Low
+871,Itwari,21.16256,79.08695,15,Rain,Highway,High,2,Medium
+872,Sadar,21.15984,79.09354,10,Fog,Flyover,Medium,5,Medium
+873,Nandanvan,21.1219,79.13651,2,Rain,Junction,High,0,High
+874,Mankapur,21.12211,79.03013,15,Clear,Urban,Medium,3,Low
+875,Nagpur Railway Stn,21.15044,79.07915,13,Rain,Urban,High,2,Medium
+876,Ambazari,21.10672,78.98898,1,Clear,Junction,High,10,High
+877,Beltarodi,21.08521,79.04551,15,Rain,Urban,Low,4,Low
+878,Koradi,21.26882,79.0022,6,Cloudy,Highway,Medium,4,Low
+879,Butibori,20.96738,79.04386,14,Clear,City Road,Medium,1,Low
+880,MIDC Hingna,21.09982,79.00021,14,Clear,Junction,High,6,Medium
+881,Sitabuldi Junction,21.14832,79.10621,23,Rain,City Road,Low,7,Medium
+882,Wardha Road,21.0775,79.05793,0,Clear,Ring Road,High,3,Medium
+883,Hingna T Point,21.09732,78.96577,3,Fog,Junction,Low,7,High
+884,Chatrapati Square,21.12504,79.1129,15,Haze,City Road,Medium,2,Medium
+885,Ravi Nagar,21.13601,79.07396,14,Haze,Urban,High,6,Medium
+886,Dharampeth,21.12744,79.07493,6,Rain,Urban,High,2,Medium
+887,Civil Lines,21.14206,79.09279,13,Cloudy,Junction,High,2,Medium
+888,Trimurti Nagar,21.16248,79.0531,22,Clear,Junction,High,0,High
+889,Pratap Nagar,21.10692,79.0334,17,Clear,Junction,Low,2,Medium
+890,Zero Mile,21.13633,79.09992,16,Clear,Junction,Medium,5,Medium
+891,Itwari,21.1611,79.08404,16,Clear,Highway,Medium,8,Medium
+892,Sadar,21.16868,79.08498,20,Cloudy,Junction,Medium,5,High
+893,Nandanvan,21.12872,79.10509,5,Cloudy,Junction,Low,5,Medium
+894,Mankapur,21.11338,79.02035,6,Clear,Highway,High,1,Low
+895,Nagpur Railway Stn,21.13358,79.074,5,Rain,Ring Road,Medium,3,Medium
+896,Ambazari,21.12759,78.98217,23,Haze,Ring Road,High,5,Medium
+897,Beltarodi,21.07721,79.01227,16,Clear,Junction,High,5,Medium
+898,Koradi,21.26008,78.9856,7,Clear,Junction,Medium,7,Medium
+899,Butibori,20.95095,79.04588,4,Rain,Flyover,Medium,4,High
+900,MIDC Hingna,21.08456,79.01838,16,Cloudy,City Road,Low,4,Low
+901,Sitabuldi Junction,21.1533,79.08701,8,Haze,Urban,High,3,Low
+902,Wardha Road,21.09164,79.05099,17,Haze,Highway,Medium,4,Medium
+903,Hingna T Point,21.08397,78.99636,13,Rain,Junction,High,3,High
+904,Chatrapati Square,21.13867,79.08499,23,Clear,Junction,Low,5,Medium
+905,Ravi Nagar,21.14744,79.07014,21,Haze,Junction,Medium,4,High
+906,Dharampeth,21.14928,79.05385,23,Haze,City Road,High,3,Medium
+907,Civil Lines,21.17001,79.08814,4,Cloudy,Highway,High,3,High
+908,Trimurti Nagar,21.15036,79.04257,14,Clear,Urban,Low,6,Low
+909,Pratap Nagar,21.12508,79.03517,4,Fog,Junction,High,5,High
+910,Zero Mile,21.14326,79.09185,7,Rain,Flyover,High,1,Medium
+911,Itwari,21.14524,79.11858,9,Fog,Highway,High,1,Medium
+912,Sadar,21.15823,79.07865,8,Fog,Junction,High,5,High
+913,Nandanvan,21.12443,79.12677,11,Cloudy,Highway,Medium,4,Low
+914,Mankapur,21.12686,79.0301,13,Clear,Flyover,High,5,Medium
+915,Nagpur Railway Stn,21.14748,79.09606,13,Fog,City Road,Medium,4,Medium
+916,Ambazari,21.10861,79.00749,10,Cloudy,Junction,High,6,Medium
+917,Beltarodi,21.07027,79.04866,8,Fog,City Road,Low,4,Low
+918,Koradi,21.26196,79.00091,14,Rain,Highway,High,1,Medium
+919,Butibori,20.96122,79.05227,4,Clear,Flyover,Medium,4,High
+920,MIDC Hingna,21.0873,79.01267,16,Cloudy,City Road,Medium,3,Low
+921,Sitabuldi Junction,21.16221,79.08036,17,Clear,Urban,Medium,2,Low
+922,Wardha Road,21.07842,79.06372,18,Cloudy,Highway,High,3,Medium
+923,Hingna T Point,21.10449,78.96612,18,Clear,Highway,High,2,Medium
+924,Chatrapati Square,21.1264,79.11228,16,Rain,Junction,High,6,High
+925,Ravi Nagar,21.1336,79.07384,10,Clear,Highway,High,4,Medium
+926,Dharampeth,21.12024,79.05128,17,Clear,City Road,Medium,3,Low
+927,Civil Lines,21.15847,79.07744,2,Clear,Urban,Medium,3,Medium
+928,Trimurti Nagar,21.13249,79.0293,17,Haze,Ring Road,High,5,Medium
+929,Pratap Nagar,21.1213,79.03978,18,Cloudy,Highway,High,5,Medium
+930,Zero Mile,21.16195,79.10295,22,Rain,Highway,Low,1,Medium
+931,Itwari,21.16422,79.10579,3,Rain,City Road,Medium,4,High
+932,Sadar,21.15209,79.06692,8,Clear,City Road,High,8,Medium
+933,Nandanvan,21.11168,79.13627,22,Cloudy,Urban,Medium,8,Medium
+934,Mankapur,21.11092,79.0201,2,Rain,City Road,Low,2,Medium
+935,Nagpur Railway Stn,21.1636,79.08345,12,Rain,Junction,Low,3,Medium
+936,Ambazari,21.12329,78.9794,11,Rain,Urban,Low,6,Low
+937,Beltarodi,21.07037,79.03129,1,Fog,Urban,Low,3,Medium
+938,Koradi,21.23525,79.01277,20,Haze,Highway,Low,3,Medium
+939,Butibori,20.97967,79.05938,11,Clear,Highway,Medium,4,Medium
+940,MIDC Hingna,21.10157,79.00129,13,Clear,City Road,Medium,9,Low
+941,Sitabuldi Junction,21.12719,79.10376,9,Cloudy,City Road,Medium,7,Low
+942,Wardha Road,21.0824,79.076,20,Cloudy,Highway,Medium,6,Medium
+943,Hingna T Point,21.0864,78.96057,23,Rain,Urban,Low,2,Medium
+944,Chatrapati Square,21.13078,79.077,6,Cloudy,Junction,High,3,Medium
+945,Ravi Nagar,21.11844,79.06873,3,Fog,Highway,Medium,4,High
+946,Dharampeth,21.11699,79.06302,23,Clear,Highway,Medium,3,Medium
+947,Civil Lines,21.1569,79.07255,8,Fog,City Road,Medium,6,Medium
+948,Trimurti Nagar,21.12599,79.04335,14,Cloudy,Highway,Medium,8,Medium
+949,Pratap Nagar,21.13227,79.04344,20,Clear,Junction,Low,2,Medium
+950,Zero Mile,21.15166,79.08336,17,Clear,City Road,Medium,3,Low
+951,Itwari,21.16464,79.08197,16,Fog,Flyover,Medium,1,High
+952,Sadar,21.15413,79.10014,4,Rain,Highway,Medium,4,High
+953,Nandanvan,21.12092,79.1121,8,Cloudy,Ring Road,Medium,2,Low
+954,Mankapur,21.13052,79.04657,11,Clear,Highway,Medium,5,Medium
+955,Nagpur Railway Stn,21.16379,79.07869,22,Clear,Highway,Low,6,Medium
+956,Ambazari,21.13977,78.98165,14,Fog,Junction,High,4,High
+957,Beltarodi,21.05272,79.01433,21,Clear,Highway,Low,2,Medium
+958,Koradi,21.23187,79.01781,4,Rain,Ring Road,High,7,High
+959,Butibori,20.96359,79.05012,1,Fog,Junction,High,2,High
+960,MIDC Hingna,21.08752,79.0137,7,Clear,City Road,High,6,Low
+961,Sitabuldi Junction,21.16452,79.081,21,Fog,Junction,High,2,High
+962,Wardha Road,21.07556,79.04876,22,Rain,Junction,Low,4,High
+963,Hingna T Point,21.1042,78.98755,15,Clear,Urban,Medium,5,Low
+964,Chatrapati Square,21.12587,79.08017,20,Clear,Highway,Medium,6,Medium
+965,Ravi Nagar,21.1506,79.06881,2,Clear,Highway,High,4,High
+966,Dharampeth,21.14702,79.06503,9,Clear,Highway,Low,2,Medium
+967,Civil Lines,21.1571,79.10418,11,Rain,Urban,Low,4,Low
+968,Trimurti Nagar,21.12968,79.03997,17,Haze,City Road,High,3,Medium
+969,Pratap Nagar,21.11988,79.033,6,Rain,City Road,High,2,Medium
+970,Zero Mile,21.14847,79.08037,4,Rain,City Road,Medium,3,Medium
+971,Itwari,21.14672,79.09749,8,Clear,Ring Road,Medium,5,Low
+972,Sadar,21.14641,79.07504,16,Fog,Highway,High,4,High
+973,Nandanvan,21.13788,79.1399,9,Rain,Ring Road,High,6,Medium
+974,Mankapur,21.10168,79.04393,19,Fog,Highway,Medium,4,Medium
+975,Nagpur Railway Stn,21.14896,79.10355,5,Rain,Highway,Low,9,High
+976,Ambazari,21.13473,79.00261,16,Haze,Junction,High,5,Medium
+977,Beltarodi,21.08368,79.02855,3,Clear,Junction,Medium,2,High
+978,Koradi,21.26479,78.99728,15,Fog,City Road,High,4,Medium
+979,Butibori,20.96222,79.04982,3,Clear,Highway,Medium,6,Medium
+980,MIDC Hingna,21.08918,79.01247,6,Rain,Urban,Medium,6,Medium
+981,Sitabuldi Junction,21.16145,79.09363,3,Clear,Junction,High,3,High
+982,Wardha Road,21.10143,79.05285,18,Clear,Junction,Medium,4,Medium
+983,Hingna T Point,21.098,78.98335,17,Fog,Highway,High,4,High
+984,Chatrapati Square,21.13995,79.10794,7,Haze,Urban,High,5,Medium
+985,Ravi Nagar,21.15305,79.06548,23,Cloudy,Flyover,Low,4,Medium
+986,Dharampeth,21.13297,79.08332,20,Fog,Ring Road,High,7,High
+987,Civil Lines,21.13521,79.10048,18,Clear,Junction,High,5,Medium
+988,Trimurti Nagar,21.14288,79.05736,8,Fog,Highway,High,2,High
+989,Pratap Nagar,21.09926,79.04582,4,Rain,Urban,High,5,High
+990,Zero Mile,21.13407,79.06824,14,Clear,Highway,Medium,1,Low
+991,Itwari,21.1402,79.08195,13,Rain,Highway,Low,4,Medium
+992,Sadar,21.15871,79.06965,20,Rain,Junction,High,1,High
+993,Nandanvan,21.13332,79.13743,20,Fog,Ring Road,High,7,High
+994,Mankapur,21.11727,79.04536,15,Cloudy,Flyover,High,4,Medium
+995,Nagpur Railway Stn,21.1276,79.0714,16,Fog,Flyover,High,4,High
+996,Ambazari,21.14608,78.97662,21,Fog,Highway,Medium,9,High
+997,Beltarodi,21.07862,79.03809,2,Rain,Urban,Low,7,Medium
+998,Koradi,21.23886,79.01026,5,Haze,Ring Road,Low,3,Medium
+999,Butibori,20.9851,79.03796,3,Clear,Highway,Medium,3,Medium
+1000,MIDC Hingna,21.09464,78.99739,17,Rain,Ring Road,High,5,Medium
