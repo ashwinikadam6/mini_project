@@ -10,11 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+<<<<<<< HEAD
     "leaflet": "^1.9.4",
     "leaflet-routing-machine": "^3.2.12",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-leaflet": "^5.0.0"
+=======
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

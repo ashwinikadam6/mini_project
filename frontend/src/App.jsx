@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+<<<<<<< HEAD
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMap, LayersControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -12,6 +13,8 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
+=======
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
 
 // ============================================================
 // API CONFIG — points to your Flask backend
@@ -420,10 +423,14 @@ const STYLES = `
     gap: 12px;
   }
   
+<<<<<<< HEAD
   /* Mobile & Layout */
   @media (max-width: 900px) {
     .brand-section { display: none !important; }
   }
+=======
+  /* Mobile */
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
   @media (max-width: 768px) {
     .sidebar, .rightpanel { display: none; }
     .map-area { left: 0; right: 0; }
@@ -486,6 +493,7 @@ const Icon = {
 // ============================================================
 // MAP COMPONENT (SVG-based interactive map)
 // ============================================================
+<<<<<<< HEAD
 function RoutingControl({ route, color, onRouteFound, onRouteSummary }) {
   const map = useMap();
 
@@ -652,6 +660,160 @@ function NagpurMap({ pins, heatmap, route, routeColor, vehiclePos, onPinClick, a
           );
         })}
       </MapContainer>
+=======
+function NagpurMap({ pins, heatmap, route, vehiclePos, onPinClick, activePin }) {
+  // Map bounds for Nagpur
+  const MAP_BOUNDS = { minLat: 20.9, maxLat: 21.3, minLng: 78.85, maxLng: 79.25 };
+
+  const toPercent = (lat, lng) => ({
+    x: ((lng - MAP_BOUNDS.minLng) / (MAP_BOUNDS.maxLng - MAP_BOUNDS.minLng)) * 100,
+    y: ((MAP_BOUNDS.maxLat - lat) / (MAP_BOUNDS.maxLat - MAP_BOUNDS.minLat)) * 100,
+  });
+
+  // Render roads as SVG
+  const roads = [
+    // Major roads
+    [[21.15, 79.05], [21.15, 79.1]],
+    [[21.1, 79.0], [21.15, 79.05]],
+    [[21.1, 79.06], [21.2, 79.06]],
+    [[21.12, 78.99], [21.12, 79.12]],
+    [[21.14, 79.0], [21.14, 79.1]],
+    [[21.05, 79.02], [21.18, 79.15]],
+    [[21.16, 79.08], [21.08, 79.02]],
+    [[21.09, 78.98], [21.09, 79.1]],
+    [[21.13, 79.07], [21.13, 79.12]],
+  ];
+
+  return (
+    <div className="map-wrapper" style={{ width: "100%", height: "100%" }}>
+      <div className="map-grid" />
+      <div className="scan-container" style={{ position: "absolute", inset: 0 }}>
+        <div className="scan-line" />
+      </div>
+
+      {/* SVG overlay for roads + route */}
+      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 3 }} viewBox="0 0 100 100" preserveAspectRatio="none">
+        {/* Background roads */}
+        {roads.map((pts, i) => {
+          const a = toPercent(pts[0][0], pts[0][1]);
+          const b = toPercent(pts[1][0], pts[1][1]);
+          return (
+            <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y}
+              stroke="rgba(59,130,246,0.18)" strokeWidth="0.5" />
+          );
+        })}
+
+        {/* Route line */}
+        {route && route.length >= 2 && (
+          <>
+            {route.map((pt, i) => {
+              if (i === 0) return null;
+              const a = toPercent(route[i - 1].lat, route[i - 1].lng);
+              const b = toPercent(pt.lat, pt.lng);
+              return (
+                <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y}
+                  stroke="#3b82f6" strokeWidth="1.5"
+                  strokeDasharray="3,2"
+                  style={{ filter: "drop-shadow(0 0 4px #3b82f6)" }} />
+              );
+            })}
+          </>
+        )}
+      </svg>
+
+      {/* Heatmap circles */}
+      {heatmap && NAGPUR_LOCATIONS.slice(0, 12).map((loc, i) => {
+        const pt = toPercent(loc.lat, loc.lng);
+        const nearby = DATASET.filter(d =>
+          Math.abs(parseFloat(d.latitude) - loc.lat) < 0.04 &&
+          Math.abs(parseFloat(d.longitude) - loc.lng) < 0.04
+        );
+        const highCount = nearby.filter(d => d.risk_level === "High").length;
+        const intensity = Math.min(highCount / 20, 1);
+        const size = 40 + intensity * 60;
+        const color = intensity > 0.6 ? "239,68,68" : intensity > 0.3 ? "245,158,11" : "16,185,129";
+        return (
+          <div key={i} className="heat-circle" style={{
+            left: `${pt.x}%`, top: `${pt.y}%`,
+            width: size, height: size,
+            background: `radial-gradient(circle, rgba(${color},0.35) 0%, rgba(${color},0) 70%)`,
+          }} />
+        );
+      })}
+
+      {/* Accident pins */}
+      {pins && pins.map((pin, i) => {
+        const pt = toPercent(parseFloat(pin.latitude), parseFloat(pin.longitude));
+        const riskClass = pin.risk_level?.toLowerCase();
+        const isActive = activePin === i;
+        return (
+          <div key={i} className="map-pin" style={{ left: `${pt.x}%`, top: `${pt.y}%` }}
+            onClick={() => onPinClick && onPinClick(i, pin)}>
+            <div className={`pin-dot ${riskClass}`} style={{
+              transform: isActive ? "scale(1.8)" : "scale(1)",
+              transition: "transform 0.2s",
+            }} />
+            {isActive && (
+              <div className="tooltip" style={{ fontSize: 11, minWidth: 140 }}>
+                <div style={{ fontWeight: 700, marginBottom: 4 }}>{pin.location}</div>
+                <div>Risk: <span style={{ color: riskClass === "high" ? "#ef4444" : riskClass === "medium" ? "#f59e0b" : "#10b981", fontWeight: 700 }}>{pin.risk_level}</span></div>
+                <div style={{ color: "var(--muted)" }}>{pin.weather} · {pin.road_type}</div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {/* Vehicle */}
+      {route && vehiclePos !== undefined && (
+        <div className="vehicle-dot" style={{
+          left: `${vehiclePos}%`,
+          top: "50%",
+          transform: "translateY(-50%)",
+        }} />
+      )}
+
+      {/* Map labels */}
+      {NAGPUR_LOCATIONS.slice(0, 8).map((loc, i) => {
+        const pt = toPercent(loc.lat, loc.lng);
+        return (
+          <div key={i} style={{
+            position: "absolute", left: `${pt.x}%`, top: `${pt.y}%`,
+            transform: "translate(-50%, -130%)",
+            fontSize: 9, color: "rgba(148,163,184,0.7)",
+            fontFamily: "DM Sans, sans-serif",
+            pointerEvents: "none", zIndex: 4,
+            textShadow: "0 1px 3px rgba(0,0,0,0.8)",
+            whiteSpace: "nowrap",
+          }}>
+            {loc.name}
+          </div>
+        );
+      })}
+
+      {/* Compass */}
+      <div style={{
+        position: "absolute", bottom: 20, right: 20, zIndex: 10,
+        width: 44, height: 44, borderRadius: "50%",
+        background: "rgba(17,24,39,0.9)",
+        border: "1px solid var(--border)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 11, fontWeight: 700, color: "#ef4444",
+        fontFamily: "Syne, sans-serif",
+      }}>N</div>
+
+      {/* Scale */}
+      <div style={{
+        position: "absolute", bottom: 20, left: 20, zIndex: 10,
+        background: "rgba(17,24,39,0.85)",
+        border: "1px solid var(--border)",
+        borderRadius: 6, padding: "4px 10px",
+        fontSize: 10, color: "var(--muted)",
+      }}>
+        <div style={{ borderBottom: "2px solid var(--accent)", paddingBottom: 2, marginBottom: 2 }}>─────</div>
+        5 km
+      </div>
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
     </div>
   );
 }
@@ -678,9 +840,15 @@ function AuthPage({ onLogin }) {
   return (
     <div className="auth-bg">
       <style>{STYLES}</style>
+<<<<<<< HEAD
       <div style={{ display: "flex", gap: 60, alignItems: "center", padding: 20, maxWidth: 1000, width: "100%", justifyContent: "center" }}>
         {/* Left branding */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }} className="desktop-show brand-section">
+=======
+      <div style={{ display: "flex", gap: 60, alignItems: "center", padding: 20, maxWidth: 1000, width: "100%" }}>
+        {/* Left branding */}
+        <div style={{ flex: 1, display: "none" }} className="desktop-show">
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
           <div className="float" style={{ marginBottom: 24 }}>
             <Icon.Logo />
           </div>
@@ -816,7 +984,10 @@ function TopNav({ user, page, setPage, darkMode, setDarkMode, onLogout }) {
 function DashboardPage() {
   const [activePin, setActivePin] = useState(null);
   const [showHeat, setShowHeat] = useState(true);
+<<<<<<< HEAD
   const [showPins, setShowPins] = useState(true);
+=======
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
   const [filter, setFilter] = useState("All");
   const [apiStats, setApiStats] = useState(null);
   const [apiPins, setApiPins] = useState([]);
@@ -879,14 +1050,23 @@ function DashboardPage() {
           ))}
         </div>
 
+<<<<<<< HEAD
         <div style={{ marginBottom: 20, display: "flex", flexDirection: "column", gap: 12 }}>
           <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13 }} onClick={() => setShowHeat(!showHeat)}>
+=======
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13 }}>
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
             <div style={{
               width: 36, height: 20, borderRadius: 10,
               background: showHeat ? "var(--accent)" : "var(--surface2)",
               position: "relative", transition: "background 0.2s",
               border: "1px solid var(--border)",
+<<<<<<< HEAD
             }}>
+=======
+            }} onClick={() => setShowHeat(!showHeat)}>
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
               <div style={{
                 position: "absolute", top: 2, left: showHeat ? "calc(100% - 18px)" : 2,
                 width: 14, height: 14, borderRadius: "50%", background: "white",
@@ -895,6 +1075,7 @@ function DashboardPage() {
             </div>
             Heatmap Overlay
           </label>
+<<<<<<< HEAD
           <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13 }} onClick={() => setShowPins(!showPins)}>
             <div style={{
               width: 36, height: 20, borderRadius: 10,
@@ -910,6 +1091,8 @@ function DashboardPage() {
             </div>
             Show Blackspots
           </label>
+=======
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
         </div>
 
         <h3 style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Statistics</h3>
@@ -941,7 +1124,11 @@ function DashboardPage() {
       {/* Map */}
       <div className="map-area">
         <NagpurMap
+<<<<<<< HEAD
           pins={showPins ? displayPins : []}
+=======
+          pins={displayPins}
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
           heatmap={showHeat}
           activePin={activePin}
           onPinClick={(i) => setActivePin(activePin === i ? null : i)}
@@ -981,6 +1168,7 @@ function DashboardPage() {
 }
 
 // ============================================================
+<<<<<<< HEAD
 // AUTOCOMPLETE COMPONENT
 // ============================================================
 function LocationAutocomplete({ placeholder, value, onChange }) {
@@ -1051,6 +1239,8 @@ function LocationAutocomplete({ placeholder, value, onChange }) {
 }
 
 // ============================================================
+=======
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
 // NAVIGATION PAGE
 // ============================================================
 function NavigationPage() {
@@ -1061,6 +1251,7 @@ function NavigationPage() {
   const [vehiclePos, setVehiclePos] = useState(5);
   const [driving, setDriving] = useState(false);
   const [step, setStep] = useState(0);
+<<<<<<< HEAD
   const [dynamicSummary, setDynamicSummary] = useState(null);
   const [weatherData, setWeatherData] = useState(null);
   const driveRef = useRef(null);
@@ -1114,6 +1305,14 @@ function NavigationPage() {
     const srcLoc = await getLoc(src);
     const dstLoc = await getLoc(dst);
 
+=======
+  const driveRef = useRef(null);
+
+  const srcLoc = NAGPUR_LOCATIONS.find(l => l.name.toLowerCase().includes(src.toLowerCase()));
+  const dstLoc = NAGPUR_LOCATIONS.find(l => l.name.toLowerCase().includes(dst.toLowerCase()));
+
+  const findRoutes = async () => {
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
     if (!srcLoc || !dstLoc) return;
 
     const basePayload = {
@@ -1123,22 +1322,37 @@ function NavigationPage() {
       accident_count: 6,
     };
 
+<<<<<<< HEAD
     const currentWText = weatherData ? weatherData.text : "Clear";
 
     // Route 1: fastest (highway, high density)
     const r1Pred = await apiFetch("/predict", {
       method: "POST",
       body: JSON.stringify({ ...basePayload, weather: currentWText, road_type: "Highway", traffic_density: "High" }),
+=======
+    // Route 1: fastest (highway, high density)
+    const r1Pred = await apiFetch("/predict", {
+      method: "POST",
+      body: JSON.stringify({ ...basePayload, weather: "Clear", road_type: "Highway", traffic_density: "High" }),
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
     });
     // Route 2: safest (urban, low density)
     const r2Pred = await apiFetch("/predict", {
       method: "POST",
+<<<<<<< HEAD
       body: JSON.stringify({ ...basePayload, weather: currentWText, road_type: "Urban", traffic_density: "Low" }),
+=======
+      body: JSON.stringify({ ...basePayload, weather: "Clear", road_type: "Urban", traffic_density: "Low" }),
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
     });
 
     const toResult = (pred) => pred
       ? { level: pred.risk_level, highPct: pred.probabilities?.High ?? 50, medPct: pred.probabilities?.Medium ?? 30, lowPct: pred.probabilities?.Low ?? 20 }
+<<<<<<< HEAD
       : predictRisk({ hour: new Date().getHours(), weather: currentWText, roadType: "Highway", density: "High", lat: srcLoc.lat, lng: srcLoc.lng });
+=======
+      : predictRisk({ hour: new Date().getHours(), weather: "Clear", roadType: "Highway", density: "High", lat: srcLoc.lat, lng: srcLoc.lng });
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
 
     const r1 = {
       name: "Fastest Route",
@@ -1148,6 +1362,7 @@ function NavigationPage() {
       color: "#3b82f6",
       waypoints: [
         { lat: srcLoc.lat, lng: srcLoc.lng },
+<<<<<<< HEAD
         { lat: dstLoc.lat, lng: dstLoc.lng },
       ],
     };
@@ -1160,6 +1375,12 @@ function NavigationPage() {
     const addLat = -dLng * 0.25;
     const addLng = dLat * 0.25;
     
+=======
+        { lat: (srcLoc.lat + dstLoc.lat) / 2 + 0.01, lng: (srcLoc.lng + dstLoc.lng) / 2 },
+        { lat: dstLoc.lat, lng: dstLoc.lng },
+      ],
+    };
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
     const r2 = {
       name: "Safest Route",
       time: "22 min",
@@ -1168,7 +1389,11 @@ function NavigationPage() {
       color: "#10b981",
       waypoints: [
         { lat: srcLoc.lat, lng: srcLoc.lng },
+<<<<<<< HEAD
         { lat: midLat + addLat, lng: midLng + addLng }, // Detour waypoint
+=======
+        { lat: (srcLoc.lat + dstLoc.lat) / 2 - 0.01, lng: (srcLoc.lng + dstLoc.lng) / 2 - 0.01 },
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
         { lat: dstLoc.lat, lng: dstLoc.lng },
       ],
     };
@@ -1179,17 +1404,30 @@ function NavigationPage() {
 
   const startDrive = () => {
     setDriving(true);
+<<<<<<< HEAD
     setVehiclePos(0);
     let pos = 0;
     driveRef.current = setInterval(() => {
       pos += 1; // 1% per tick
       setVehiclePos(pos);
       if (pos >= 100) {
+=======
+    setVehiclePos(5);
+    let pos = 5;
+    driveRef.current = setInterval(() => {
+      pos += 0.6;
+      setVehiclePos(pos);
+      if (pos >= 90) {
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
         clearInterval(driveRef.current);
         setDriving(false);
         setStep(3);
       }
+<<<<<<< HEAD
     }, 100);
+=======
+    }, 60);
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
   };
 
   useEffect(() => () => clearInterval(driveRef.current), []);
@@ -1213,6 +1451,7 @@ function NavigationPage() {
         <h3 style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted)" }}>Route Planner</h3>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
+<<<<<<< HEAD
           <div style={{ display: "flex", gap: 8 }}>
             <div style={{ position: "relative", flex: 1 }}>
               <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 8, height: 8, borderRadius: "50%", background: "#10b981", zIndex: 2 }} />
@@ -1243,6 +1482,21 @@ function NavigationPage() {
             <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 8, height: 8, borderRadius: "50%", background: "#ef4444", zIndex: 2 }} />
             <LocationAutocomplete placeholder="Destination..." value={dst} onChange={setDst} />
           </div>
+=======
+          <div style={{ position: "relative" }}>
+            <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 8, height: 8, borderRadius: "50%", background: "#10b981", zIndex: 1 }} />
+            <input className="input-field" style={{ paddingLeft: 28 }} placeholder="Source location..."
+              value={src} onChange={e => setSrc(e.target.value)} list="loc-list" />
+          </div>
+          <div style={{ position: "relative" }}>
+            <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 8, height: 8, borderRadius: "50%", background: "#ef4444", zIndex: 1 }} />
+            <input className="input-field" style={{ paddingLeft: 28 }} placeholder="Destination..."
+              value={dst} onChange={e => setDst(e.target.value)} list="loc-list" />
+          </div>
+          <datalist id="loc-list">
+            {NAGPUR_LOCATIONS.map(l => <option key={l.name} value={l.name} />)}
+          </datalist>
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
           <button className="btn-primary" style={{ width: "100%" }} onClick={findRoutes}>Find Routes</button>
         </div>
 
@@ -1250,7 +1504,11 @@ function NavigationPage() {
         {routes && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
             {routes.map((r, i) => (
+<<<<<<< HEAD
               <div key={i} onClick={() => { setSelectedRoute(i); setDynamicSummary(null); }} style={{
+=======
+              <div key={i} onClick={() => setSelectedRoute(i)} style={{
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
                 padding: 12, borderRadius: 10, cursor: "pointer",
                 border: `2px solid ${selectedRoute === i ? r.color : "var(--border)"}`,
                 background: selectedRoute === i ? `${r.color}15` : "var(--surface2)",
@@ -1261,8 +1519,13 @@ function NavigationPage() {
                   <span className={`risk-badge risk-${r.risk.level}`}>{r.risk.level}</span>
                 </div>
                 <div style={{ display: "flex", gap: 16, fontSize: 12, color: "var(--muted)" }}>
+<<<<<<< HEAD
                   <span>⏱ {selectedRoute === i && dynamicSummary ? Math.round(dynamicSummary.totalTime/60) + " min" : r.time}</span>
                   <span>📍 {selectedRoute === i && dynamicSummary ? (dynamicSummary.totalDistance/1000).toFixed(1) + " km" : r.dist}</span>
+=======
+                  <span>⏱ {r.time}</span>
+                  <span>📍 {r.dist}</span>
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
                 </div>
                 <div style={{ marginTop: 8 }}>
                   <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>Risk: {r.risk.highPct}% High · {r.risk.medPct}% Medium</div>
@@ -1309,9 +1572,13 @@ function NavigationPage() {
           pins={DATASET.slice(0, 40)}
           heatmap={false}
           route={routes ? routes[selectedRoute].waypoints : null}
+<<<<<<< HEAD
           routeColor={routes ? routes[selectedRoute].color : null}
           vehiclePos={driving ? vehiclePos : undefined}
           onRouteSummary={setDynamicSummary}
+=======
+          vehiclePos={driving ? vehiclePos : undefined}
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
         />
         {step === 3 && (
           <div style={{
@@ -1320,6 +1587,7 @@ function NavigationPage() {
             padding: "20px 32px", borderRadius: 16, textAlign: "center",
             fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 18,
             backdropFilter: "blur(10px)", zIndex: 20,
+<<<<<<< HEAD
             display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
             boxShadow: "0 10px 40px rgba(0,0,0,0.2)"
           }}>
@@ -1327,6 +1595,10 @@ function NavigationPage() {
             <button className="btn-ghost" style={{ background: "rgba(0,0,0,0.2)", padding: "8px 24px", borderRadius: 8, fontSize: 14, color: "white", cursor: "pointer", border: "none", fontWeight: 600 }} onClick={() => setStep(0)}>
               Close
             </button>
+=======
+          }}>
+            🎉 You have arrived safely!
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
           </div>
         )}
       </div>
@@ -1338,10 +1610,17 @@ function NavigationPage() {
         <div className="stat-card" style={{ marginBottom: 12 }}>
           <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>Current Weather</div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+<<<<<<< HEAD
             <div style={{ fontSize: 28 }}>{weatherData ? weatherData.icon : "☀️"}</div>
             <div>
               <div style={{ fontWeight: 700, fontSize: 16 }}>{weatherData ? weatherData.text : "Clear"}</div>
               <div style={{ fontSize: 12, color: "var(--muted)" }}>{weatherData ? weatherData.temp : 28}°C · Humidity {weatherData ? weatherData.humidity : 50}%</div>
+=======
+            <div style={{ fontSize: 28 }}>🌧️</div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 16 }}>Light Rain</div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>22°C · Humidity 78%</div>
+>>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
             </div>
           </div>
         </div>
