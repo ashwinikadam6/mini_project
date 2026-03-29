@@ -3,11 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 // ============================================================
 // API CONFIG — points to your Flask backend
 // ============================================================
-<<<<<<< HEAD
-const API = "http://127.0.0.1:5000/api";
-=======
 const API = "http://localhost:5000/api";
->>>>>>> 5342ebc18771da86e42ee38e205e599d3631a66a
 
 async function apiFetch(path, options = {}) {
   try {
