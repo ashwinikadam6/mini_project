@@ -10,7 +10,6 @@ import joblib, numpy as np, pandas as pd, json, os
 
 app = Flask(__name__)
 
-# ✅ CORS FIX (FINAL)
 CORS(app, supports_credentials=True)
 
 @app.after_request
@@ -39,7 +38,6 @@ def load_model():
 
 load_model()
 
-# ✅ Load dataset safely
 dataset = []
 if os.path.exists("nagpur_accident_dataset.csv"):
     try:
