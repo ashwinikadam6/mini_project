@@ -11,7 +11,21 @@ from models import db, User, AccidentRecord, ReportedHazard
 
 app = Flask(__name__)
 
-# ✅ CORS FIX (FINAL)
+# ============================================================
+# DATABASE CONFIGURATION (SQLite)
+# ============================================================
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///saferoute.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialise SQLAlchemy with the app
+db.init_app(app)
+
+# Auto-create all tables the first time app starts
+with app.app_context():
+    db.create_all()
+    print("[OK] Database ready -> instance/saferoute.db")
+
+# CORS FIX
 CORS(app, supports_credentials=True)
 
 @app.after_request
