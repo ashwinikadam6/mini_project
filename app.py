@@ -1,15 +1,17 @@
 """
 SafeRoute AI - Flask Backend API
 Run: python app.py
-Requires: pip install flask flask-cors joblib scikit-learn pandas numpy
+Requires: pip install flask flask-cors joblib scikit-learn pandas numpy flask-sqlalchemy flask-jwt-extended bcrypt python-dotenv
 """
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import joblib, numpy as np, pandas as pd, json, os
+from models import db, User, AccidentRecord, ReportedHazard
 
 app = Flask(__name__)
 
+# ✅ CORS FIX (FINAL)
 CORS(app, supports_credentials=True)
 
 @app.after_request
@@ -31,10 +33,10 @@ def load_model():
         le_density = joblib.load("le_density.pkl")
         le_risk    = joblib.load("le_risk.pkl")
         MODEL_LOADED = True
-        print("✅ Model loaded successfully")
+        print("[OK] Model loaded successfully")
     except Exception as e:
         MODEL_LOADED = False
-        print("❌ Model loading failed:", str(e))
+        print("[FAIL] Model loading failed:", str(e))
 
 load_model()
 
@@ -42,9 +44,11 @@ dataset = []
 if os.path.exists("nagpur_accident_dataset.csv"):
     try:
         dataset = pd.read_csv("nagpur_accident_dataset.csv").to_dict(orient="records")
-        print(f"✅ Dataset loaded: {len(dataset)} rows")
+        print(f"[OK] Dataset loaded: {len(dataset)} rows")
     except Exception as e:
-        print("❌ Dataset load error:", str(e))
+        print("[FAIL] Dataset load error:", str(e))
+
+
 
 @app.route("/api/health")
 def health():
