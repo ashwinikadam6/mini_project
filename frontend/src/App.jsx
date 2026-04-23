@@ -18,11 +18,25 @@ L.Icon.Default.mergeOptions({
 // ============================================================
 const API = "http://localhost:5000/api";
 
+// Returns the stored JWT (or null if the user is not logged in)
+function getToken() {
+  return localStorage.getItem("token");
+}
+
+// Central fetch helper — automatically attaches Authorization header when a
+// JWT is present in localStorage, so every future API call is authenticated.
 async function apiFetch(path, options = {}) {
+  const token = getToken();
+  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+
   try {
     const res = await fetch(`${API}${path}`, {
-      headers: { "Content-Type": "application/json" },
       ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeader,
+        ...(options.headers || {}),
+      },
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
@@ -667,12 +681,64 @@ function AuthPage({ onLogin }) {
 
   const handle = async () => {
     setErr("");
-    if (!form.email || !form.password) { setErr("All fields required"); return; }
-    if (mode === "register" && form.password !== form.confirm) { setErr("Passwords don't match"); return; }
+
+    // --- Client-side validation ---
+    if (mode === "register" && !form.name.trim()) {
+      setErr("Full name is required"); return;
+    }
+    if (!form.email || !form.password) {
+      setErr("Email and password are required"); return;
+    }
+    if (mode === "register" && form.password !== form.confirm) {
+      setErr("Passwords don't match"); return;
+    }
+
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setLoading(false);
-    onLogin({ name: form.name || "User", email: form.email });
+    try {
+      if (mode === "register") {
+        // ------ REGISTER ------
+        const res = await fetch(`${API}/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: form.name.trim(),
+            email: form.email.trim().toLowerCase(),
+            password: form.password,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) { setErr(data.error || "Registration failed"); setLoading(false); return; }
+        // Auto-login after successful registration
+        const loginRes = await fetch(`${API}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: form.email.trim().toLowerCase(), password: form.password }),
+        });
+        const loginData = await loginRes.json();
+        if (!loginRes.ok) { setErr(loginData.error || "Auto-login failed"); setLoading(false); return; }
+        localStorage.setItem("token", loginData.access_token);
+        onLogin(loginData.user);
+      } else {
+        // ------ LOGIN ------
+        const res = await fetch(`${API}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: form.email.trim().toLowerCase(),
+            password: form.password,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) { setErr(data.error || "Login failed"); setLoading(false); return; }
+        // Store JWT in localStorage — apiFetch will pick it up automatically
+        localStorage.setItem("token", data.access_token);
+        onLogin(data.user);
+      }
+    } catch (e) {
+      setErr("Network error — is the backend running?");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -752,7 +818,7 @@ function AuthPage({ onLogin }) {
           </div>
 
           <div style={{ marginTop: 20, padding: "12px", background: "var(--surface2)", borderRadius: 10, fontSize: 12, color: "var(--muted)", textAlign: "center" }}>
-            Demo: any email & password
+            Register a free account to get started
           </div>
         </div>
       </div>
@@ -1069,26 +1135,19 @@ function NavigationPage() {
   const [step, setStep] = useState(0);
   const [dynamicSummary, setDynamicSummary] = useState(null);
   const [weatherData, setWeatherData] = useState(null);
+  const [trafficData, setTrafficData] = useState(null);
   const driveRef = useRef(null);
 
   useEffect(() => {
-    // default to nagpur center weather
-    fetch("https://api.open-meteo.com/v1/forecast?latitude=21.1458&longitude=79.0882&current_weather=true&hourly=relative_humidity_2m")
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.current_weather) {
-          const cw = data.current_weather;
-          const code = cw.weathercode;
-          let icon = "☀️"; let text = "Clear";
-          if (code >= 1 && code <= 3) { icon = "⛅"; text = "Cloudy"; }
-          else if (code >= 45 && code <= 48) { icon = "🌫️"; text = "Fog"; }
-          else if (code >= 51 && code <= 67) { icon = "🌧️"; text = "Rain"; }
-          else if (code >= 71 && code <= 82) { icon = "❄️"; text = "Snow"; }
-          else if (code >= 95) { icon = "⛈️"; text = "Thunderstorm"; }
-
-          setWeatherData({ temp: cw.temperature, text, icon, humidity: data.hourly?.relative_humidity_2m?.[0] || 50 });
-        }
-      }).catch(e => console.error(e));
+    // Fetch live weather via our Flask backend (OpenWeatherMap)
+    const W_ICONS = { Clear: "☀️", Cloudy: "⛅", Fog: "🌫️", Haze: "🌁", Rain: "🌧️" };
+    apiFetch("/live-weather?lat=21.1458&lon=79.0882").then(d => {
+      if (d?.weather) setWeatherData({ temp: d.temperature, text: d.weather, icon: W_ICONS[d.weather] || "☀️", humidity: d.humidity });
+    });
+    // Fetch live traffic via our Flask backend (TomTom)
+    apiFetch("/live-traffic?lat=21.1458&lon=79.0882").then(d => {
+      if (d?.traffic_density) setTrafficData(d);
+    });
   }, []);
 
   async function geocode(address) {
@@ -1122,29 +1181,21 @@ function NavigationPage() {
 
     if (!srcLoc || !dstLoc) return;
 
-    const basePayload = {
-      latitude: srcLoc.lat,
-      longitude: srcLoc.lng,
-      time_of_day: new Date().getHours(),
-      accident_count: 6,
-    };
-
-    const currentWText = weatherData ? weatherData.text : "Clear";
-
-    // Route 1: fastest (highway, high density)
+    // Step 2.3: backend auto-fetches weather+traffic; we only send lat/lng + road_type
+    // Route 1: Fastest (Highway)
     const r1Pred = await apiFetch("/predict", {
       method: "POST",
-      body: JSON.stringify({ ...basePayload, weather: currentWText, road_type: "Highway", traffic_density: "High" }),
+      body: JSON.stringify({ latitude: srcLoc.lat, longitude: srcLoc.lng, road_type: "Highway" }),
     });
-    // Route 2: safest (urban, low density)
+    // Route 2: Safest (Urban)
     const r2Pred = await apiFetch("/predict", {
       method: "POST",
-      body: JSON.stringify({ ...basePayload, weather: currentWText, road_type: "Urban", traffic_density: "Low" }),
+      body: JSON.stringify({ latitude: srcLoc.lat, longitude: srcLoc.lng, road_type: "Urban" }),
     });
 
     const toResult = (pred) => pred
       ? { level: pred.risk_level, highPct: pred.probabilities?.High ?? 50, medPct: pred.probabilities?.Medium ?? 30, lowPct: pred.probabilities?.Low ?? 20 }
-      : predictRisk({ hour: new Date().getHours(), weather: currentWText, roadType: "Highway", density: "High", lat: srcLoc.lat, lng: srcLoc.lng });
+      : predictRisk({ hour: new Date().getHours(), weather: "Clear", roadType: "Highway", density: "Low", lat: srcLoc.lat, lng: srcLoc.lng });
 
     const r1 = {
       name: "Fastest Route",
@@ -1353,12 +1404,16 @@ function NavigationPage() {
         </div>
 
         <div className="stat-card" style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>Traffic Density</div>
+          <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>Traffic Density · <span style={{ color: "#06b6d4" }}>Live TomTom</span></div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ fontSize: 24 }}>🚦</div>
             <div>
-              <div style={{ fontWeight: 700, color: "#f59e0b" }}>Medium</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>Avg 35 km/h</div>
+              <div style={{ fontWeight: 700, color: trafficData?.traffic_density === "High" ? "#ef4444" : trafficData?.traffic_density === "Low" ? "#10b981" : "#f59e0b" }}>
+                {trafficData?.traffic_density || "Loading..."}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                {trafficData ? `${trafficData.current_speed} km/h · ${Math.round(trafficData.congestion_ratio * 100)}% congestion` : "Fetching from TomTom..."}
+              </div>
             </div>
           </div>
         </div>
@@ -1384,40 +1439,26 @@ function NavigationPage() {
 // RISK ANALYSIS PAGE
 // ============================================================
 function RiskPage() {
-  const [inputs, setInputs] = useState({
-    location: "Sitabuldi Junction",
-    hour: 21,
-    weather: "Rain",
-    roadType: "Junction",
-    density: "High",
-  });
+  const [inputs, setInputs] = useState({ location: "Sitabuldi Junction" });
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
-
+  const [liveData, setLiveData] = useState(null);
   const loc = NAGPUR_LOCATIONS.find(l => l.name === inputs.location) || NAGPUR_LOCATIONS[0];
-
   const [apiError, setApiError] = useState("");
 
   const analyze = async () => {
     setLoading(true);
     setApiError("");
-    const payload = {
-      latitude: loc.lat,
-      longitude: loc.lng,
-      time_of_day: inputs.hour,
-      weather: inputs.weather,
-      road_type: inputs.roadType,
-      traffic_density: inputs.density,
-      accident_count: 6,
-    };
+    setLiveData(null);
 
+    // Step 2.3: only send latitude + longitude
     const data = await apiFetch("/predict", {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ latitude: loc.lat, longitude: loc.lng }),
     });
 
     if (data) {
-      // Real API response: { risk_level, probabilities: {High, Medium, Low}, confidence }
+      setLiveData({ weather: data.live_weather, traffic: data.live_traffic, inputs: data.inputs_used });
       setResult({
         level: data.risk_level,
         highPct: Math.round(data.probabilities?.High ?? 0),
@@ -1427,19 +1468,26 @@ function RiskPage() {
         source: "flask",
       });
     } else {
-      // Fallback to local simulation if backend is offline
-      setApiError("Backend offline — showing local simulation");
-      const pred = predictRisk({ hour: inputs.hour, weather: inputs.weather, roadType: inputs.roadType, density: inputs.density, lat: loc.lat, lng: loc.lng });
+      setApiError("Backend offline — using local simulation");
+      const hour = new Date().getHours();
+      const pred = predictRisk({ hour, weather: "Clear", roadType: "City Road", density: "Low", lat: loc.lat, lng: loc.lng });
       setResult({ ...pred, source: "local" });
     }
     setLoading(false);
   };
 
+  // Derive displayed values from live API response (or fallback defaults)
+  const usedInputs = liveData?.inputs || {};
+  const hour = usedInputs.time_of_day ?? new Date().getHours();
+  const weather = usedInputs.weather ?? "Clear";
+  const roadType = usedInputs.road_type ?? "City Road";
+  const density = usedInputs.traffic_density ?? "Low";
+
   const factors = result ? [
-    { label: "Time of Day", value: inputs.hour >= 20 || inputs.hour <= 5 ? "Night (High Risk)" : inputs.hour >= 17 ? "Evening (Medium)" : "Day (Low Risk)", score: inputs.hour >= 20 || inputs.hour <= 5 ? 85 : inputs.hour >= 17 ? 50 : 20, color: inputs.hour >= 20 ? "#ef4444" : inputs.hour >= 17 ? "#f59e0b" : "#10b981" },
-    { label: "Weather", value: inputs.weather, score: inputs.weather === "Rain" ? 75 : inputs.weather === "Fog" ? 90 : inputs.weather === "Haze" ? 60 : 20, color: ["Rain", "Fog", "Haze"].includes(inputs.weather) ? "#f59e0b" : "#10b981" },
-    { label: "Road Type", value: inputs.roadType, score: ["Junction", "Highway", "Flyover"].includes(inputs.roadType) ? 70 : 35, color: ["Junction", "Highway"].includes(inputs.roadType) ? "#ef4444" : "#10b981" },
-    { label: "Traffic Density", value: inputs.density, score: inputs.density === "High" ? 80 : inputs.density === "Medium" ? 50 : 20, color: inputs.density === "High" ? "#ef4444" : inputs.density === "Medium" ? "#f59e0b" : "#10b981" },
+    { label: "Time of Day", value: hour >= 20 || hour <= 5 ? `${hour}:00 — Night` : hour >= 17 ? `${hour}:00 — Evening` : `${hour}:00 — Day`, score: hour >= 20 || hour <= 5 ? 85 : hour >= 17 ? 50 : 20, color: hour >= 20 || hour <= 5 ? "#ef4444" : hour >= 17 ? "#f59e0b" : "#10b981" },
+    { label: "Weather ⮐ Live OWM", value: weather, score: weather === "Rain" ? 75 : weather === "Fog" ? 90 : weather === "Haze" ? 60 : weather === "Cloudy" ? 35 : 20, color: ["Rain", "Fog", "Haze"].includes(weather) ? "#f59e0b" : "#10b981" },
+    { label: "Road Type", value: roadType, score: ["Junction", "Highway", "Flyover"].includes(roadType) ? 70 : 35, color: ["Junction", "Highway"].includes(roadType) ? "#ef4444" : "#10b981" },
+    { label: "Traffic ⮐ Live TomTom", value: density, score: density === "High" ? 80 : density === "Medium" ? 50 : 20, color: density === "High" ? "#ef4444" : density === "Medium" ? "#f59e0b" : "#10b981" },
   ] : [];
 
   const riskColor = result?.level === "High" ? "#ef4444" : result?.level === "Medium" ? "#f59e0b" : "#10b981";
@@ -1459,37 +1507,24 @@ function RiskPage() {
             </select>
           </div>
 
-          <div>
-            <label style={{ fontSize: 11, color: "var(--muted)", marginBottom: 6, display: "block", textTransform: "uppercase", letterSpacing: "0.06em" }}>Time: {inputs.hour}:00</label>
-            <input type="range" min="0" max="23" value={inputs.hour}
-              onChange={e => setInputs({ ...inputs, hour: +e.target.value })}
-              style={{ width: "100%", accentColor: "var(--accent)" }} />
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--muted)", marginTop: 2 }}>
-              <span>12 AM</span><span>12 PM</span><span>11 PM</span>
+          <div style={{ padding: "12px 14px", background: "rgba(6,182,212,0.07)", border: "1px solid rgba(6,182,212,0.2)", borderRadius: 10, fontSize: 12, lineHeight: 1.8 }}>
+            <div style={{ color: "#06b6d4", fontWeight: 700, fontSize: 11, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ animation: "pulse 2s infinite", display: "inline-block" }}>⚡</span> LIVE DATA MODE ACTIVE
+            </div>
+            <div style={{ color: "var(--muted)" }}>
+              🌤️ Weather → <strong style={{ color: "var(--text)" }}>OpenWeatherMap API</strong><br />
+              🚦 Traffic → <strong style={{ color: "var(--text)" }}>TomTom Traffic API</strong><br />
+              ⏰ Time → <strong style={{ color: "var(--text)" }}>Current server clock</strong>
             </div>
           </div>
-
-          {[
-            { key: "weather", label: "Weather", opts: ["Clear", "Rain", "Fog", "Cloudy", "Haze"] },
-            { key: "roadType", label: "Road Type", opts: ["Junction", "Highway", "City Road", "Urban", "Flyover", "Ring Road"] },
-            { key: "density", label: "Traffic Density", opts: ["Low", "Medium", "High"] },
-          ].map(f => (
-            <div key={f.key}>
-              <label style={{ fontSize: 11, color: "var(--muted)", marginBottom: 6, display: "block", textTransform: "uppercase", letterSpacing: "0.06em" }}>{f.label}</label>
-              <select className="input-field" value={inputs[f.key]}
-                onChange={e => setInputs({ ...inputs, [f.key]: e.target.value })}>
-                {f.opts.map(o => <option key={o}>{o}</option>)}
-              </select>
-            </div>
-          ))}
 
           <button className="btn-primary" style={{ width: "100%", padding: "12px", marginTop: 4 }} onClick={analyze}>
             {loading ? (
               <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                 <span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} />
-                Calling Flask API...
+                Fetching Live Data...
               </span>
-            ) : "Run AI Prediction"}
+            ) : "🤖 Analyze Live Risk"}
           </button>
 
           {apiError && (
@@ -1500,7 +1535,7 @@ function RiskPage() {
           {result?.source && (
             <div style={{ padding: "8px 10px", background: result.source === "flask" ? "rgba(16,185,129,0.1)" : "rgba(100,116,139,0.1)", border: `1px solid ${result.source === "flask" ? "rgba(16,185,129,0.3)" : "rgba(100,116,139,0.3)"}`, borderRadius: 8, fontSize: 11, color: result.source === "flask" ? "#10b981" : "var(--muted)", display: "flex", alignItems: "center", gap: 6 }}>
               <span>●</span>
-              {result.source === "flask" ? "Result from Flask Random Forest model" : "Result from local simulation"}
+              {result.source === "flask" ? "Live result from Flask Random Forest model" : "Local simulation (backend offline)"}
             </div>
           )}
         </div>
@@ -1508,10 +1543,9 @@ function RiskPage() {
         <div style={{ marginTop: 20, padding: 12, background: "var(--surface2)", borderRadius: 10, fontSize: 11, color: "var(--muted)", lineHeight: 1.7 }}>
           <strong style={{ color: "var(--text)", fontFamily: "Syne, sans-serif" }}>Model Info</strong><br />
           Algorithm: Random Forest Classifier<br />
-          Trees: 50<br />
-          Features: 7<br />
-          Training accuracy: 91.4%<br />
-          Dataset: 1000 records
+          Trees: 100 · Features: 10<br />
+          Training accuracy: 74.5%<br />
+          Dataset: 1000 Nagpur records
         </div>
       </div>
 
@@ -1531,7 +1565,9 @@ function RiskPage() {
             <div className="glass" style={{ padding: 28, marginBottom: 20, textAlign: "center", position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 50% 50%, ${riskColor}15 0%, transparent 70%)` }} />
               <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>AI Prediction Result</div>
-              <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>{inputs.location} · {inputs.hour}:00 · {inputs.weather}</div>
+              <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>
+                {inputs.location} · {hour}:00 · {weather} · Traffic: {density}
+              </div>
 
               <div style={{ position: "relative", width: 140, height: 140, margin: "0 auto 20px" }}>
                 <svg viewBox="0 0 100 100" style={{ width: "100%", height: "100%", transform: "rotate(-90deg)" }}>
@@ -1548,6 +1584,26 @@ function RiskPage() {
               </div>
 
               <span className={`risk-badge risk-${result.level}`} style={{ fontSize: 14, padding: "8px 20px" }}>{result.level} Risk</span>
+
+              {/* Live data cards shown right below the risk badge */}
+              {liveData && (
+                <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                  <div style={{ flex: 1, padding: "10px 12px", background: "rgba(6,182,212,0.08)", borderRadius: 10, border: "1px solid rgba(6,182,212,0.2)", textAlign: "left" }}>
+                    <div style={{ color: "#06b6d4", fontSize: 10, fontWeight: 700, marginBottom: 4 }}>🌤️ LIVE WEATHER</div>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{liveData.weather?.weather ?? "—"}</div>
+                    <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
+                      {liveData.weather?.temperature}°C · {liveData.weather?.humidity}% RH
+                    </div>
+                  </div>
+                  <div style={{ flex: 1, padding: "10px 12px", background: "rgba(245,158,11,0.08)", borderRadius: 10, border: "1px solid rgba(245,158,11,0.2)", textAlign: "left" }}>
+                    <div style={{ color: "#f59e0b", fontSize: 10, fontWeight: 700, marginBottom: 4 }}>🚦 LIVE TRAFFIC</div>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{liveData.traffic?.traffic_density ?? "—"}</div>
+                    <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
+                      {liveData.traffic?.current_speed} km/h · {Math.round((liveData.traffic?.congestion_ratio ?? 0) * 100)}% congestion
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div style={{
                 marginTop: 16, padding: "12px 16px", borderRadius: 10,
@@ -1958,20 +2014,38 @@ function AdminPage() {
 // MAIN APP
 // ============================================================
 export default function App() {
-  const [user, setUser] = useState(null);
+  // Restore session from localStorage if a token already exists
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      return stored ? JSON.parse(stored) : null;
+    } catch { return null; }
+  });
   const [page, setPage] = useState("dashboard");
   const [darkMode, setDarkMode] = useState(true);
+
+  // Keep localStorage in sync whenever the user object changes
+  const handleLogin = (u) => {
+    localStorage.setItem("user", JSON.stringify(u));
+    setUser(u);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+  };
 
   return (
     <div className={darkMode ? "" : "light"} style={{ minHeight: "100vh" }}>
       <style>{STYLES}</style>
       {!user ? (
-        <AuthPage onLogin={u => setUser(u)} />
+        <AuthPage onLogin={handleLogin} />
       ) : (
         <>
           <TopNav user={user} page={page} setPage={setPage}
             darkMode={darkMode} setDarkMode={setDarkMode}
-            onLogout={() => setUser(null)} />
+            onLogout={handleLogout} />
           {page === "dashboard" && <DashboardPage />}
           {page === "navigation" && <NavigationPage />}
           {page === "risk" && <RiskPage />}
