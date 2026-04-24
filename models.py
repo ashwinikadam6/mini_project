@@ -19,15 +19,23 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     created_at    = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # Phase 5.3 — Safe Driving Score (100 = perfect, 0 = worst)
+    driving_score = db.Column(db.Integer, default=100, nullable=False)
+
+    # Phase 6.1 — Role-based access ('user' | 'admin')
+    role          = db.Column(db.String(20), default="user", nullable=False)
+
     # Relationship back to reported hazards
     hazards = db.relationship("ReportedHazard", backref="reporter", lazy=True)
 
     def to_dict(self):
         return {
-            "id":         self.id,
-            "name":       self.name,
-            "email":      self.email,
-            "created_at": self.created_at.isoformat()
+            "id":            self.id,
+            "name":          self.name,
+            "email":         self.email,
+            "driving_score": self.driving_score,
+            "role":          self.role,
+            "created_at":    self.created_at.isoformat()
         }
 
 
@@ -87,4 +95,33 @@ class ReportedHazard(db.Model):
             "status":      self.status,
             "upvotes":     self.upvotes,
             "created_at":  self.created_at.isoformat()
+        }
+
+
+class ScoreEvent(db.Model):
+    """
+    Phase 5.3 — Audit log of every driving score deduction.
+    Records why, how much, and in which high-risk zone the penalty occurred.
+    """
+    __tablename__ = "score_events"
+
+    id          = db.Column(db.Integer, primary_key=True)
+    user_id     = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    deduction   = db.Column(db.Integer, nullable=False)          # points deducted (positive number)
+    reason      = db.Column(db.String(255), nullable=False)      # e.g. "Speeding in high-risk zone"
+    zone        = db.Column(db.String(255))                      # location name
+    speed_kmh   = db.Column(db.Float)                            # driver speed at time of event
+    new_score   = db.Column(db.Integer, nullable=False)          # score after deduction
+    created_at  = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id":         self.id,
+            "user_id":    self.user_id,
+            "deduction":  self.deduction,
+            "reason":     self.reason,
+            "zone":       self.zone,
+            "speed_kmh":  self.speed_kmh,
+            "new_score":  self.new_score,
+            "created_at": self.created_at.isoformat(),
         }

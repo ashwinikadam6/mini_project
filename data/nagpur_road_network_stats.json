@@ -1,0 +1,38 @@
+{
+  "n": 39877,
+  "m": 110505,
+  "k_avg": 5.542292549589989,
+  "edge_length_total": 7021315.328707779,
+  "edge_length_avg": 63.538440149384904,
+  "streets_per_node_avg": 2.9014469493693107,
+  "streets_per_node_counts": {
+    "0": 0,
+    "1": 5436,
+    "2": 12,
+    "3": 27524,
+    "4": 6859,
+    "5": 43,
+    "6": 3
+  },
+  "streets_per_node_proportions": {
+    "0": 0.0,
+    "1": 0.1363191814830604,
+    "2": 0.0003009253454372195,
+    "3": 0.6902224339845023,
+    "4": 0.1720039120294907,
+    "5": 0.0010783158211500365,
+    "6": 7.523133635930487e-05
+  },
+  "intersection_count": 34441,
+  "street_length_total": 3772446.7807012503,
+  "street_segment_count": 57635,
+  "street_length_avg": 65.45409526678668,
+  "circuity_avg": 1.0310586225085832,
+  "self_loop_proportion": 0.0002255573870044244,
+  "place": "Nagpur, Maharashtra, India",
+  "network_type": "drive",
+  "osmnx_version": "2.1.0",
+  "graphml_file": "C:\\Projects\\mini_project-main\\data\\nagpur_road_network.graphml",
+  "file_size_mb": 47.344,
+  "download_time_seconds": 38.7
+}

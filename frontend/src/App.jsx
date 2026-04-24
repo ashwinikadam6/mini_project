@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMap, LayersControl } from 'react-leaflet';
+﻿import { useState, useEffect, useRef, useCallback } from "react";
+import { io } from "socket.io-client";
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Polyline, useMap, LayersControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet-routing-machine';
-import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 
 // Fix Leaflet marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -14,7 +13,7 @@ L.Icon.Default.mergeOptions({
 });
 
 // ============================================================
-// API CONFIG — points to your Flask backend
+// API CONFIG ?? points to your Flask backend
 // ============================================================
 const API = "http://localhost:5000/api";
 
@@ -23,25 +22,35 @@ function getToken() {
   return localStorage.getItem("token");
 }
 
-// Central fetch helper — automatically attaches Authorization header when a
+// Central fetch helper ?? automatically attaches Authorization header when a
 // JWT is present in localStorage, so every future API call is authenticated.
-async function apiFetch(path, options = {}) {
+async function apiFetch(path, options = {}, timeoutMs = 25000) {
   const token = getToken();
   const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const res = await fetch(`${API}${path}`, {
       ...options,
+      signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
         ...authHeader,
         ...(options.headers || {}),
       },
     });
+    clearTimeout(timer);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {
-    console.error("API error:", path, err.message);
+    clearTimeout(timer);
+    if (err.name === "AbortError") {
+      console.warn("API timeout:", path);
+    } else {
+      console.error("API error:", path, err.message);
+    }
     return null;
   }
 }
@@ -219,6 +228,10 @@ const STYLES = `
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
+  }
+  @keyframes geofencePulse {
+    0%,100% { box-shadow: inset 0 0 60px 20px rgba(239,68,68,0.45); }
+    50%      { box-shadow: inset 0 0 90px 40px rgba(239,68,68,0.75); }
   }
   
   .fade-in { animation: fadeIn 0.4s ease forwards; }
@@ -495,58 +508,43 @@ const Icon = {
   ArrowRight: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>,
   Logout: () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>,
   Download: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>,
+  Trophy: () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 9H4a2 2 0 01-2-2V5h4" /><path d="M18 9h2a2 2 0 002-2V5h-4" /><path d="M12 17v4" /><path d="M8 21h8" /><path d="M6 9a6 6 0 0012 0V3H6v6z" /></svg>,
 };
 
 // ============================================================
 // MAP COMPONENT (SVG-based interactive map)
 // ============================================================
-function RoutingControl({ route, color, onRouteFound, onRouteSummary }) {
+// ============================================================
+// SAFE POLYLINE ?? draws the A* route returned by /api/route
+// route_coords is [[lat,lng], ...] straight from the backend
+// ============================================================
+function SafePolyline({ coords, color, riskLevel }) {
   const map = useMap();
 
   useEffect(() => {
-    if (!route || route.length < 2) return;
+    if (!coords || coords.length < 2) return;
+    map.fitBounds(coords, { padding: [40, 40], maxZoom: 15 });
+  }, [coords, map]);
 
-    // Create Leaflet LatLng objects
-    const waypoints = route.map(pt => L.latLng(pt.lat, pt.lng));
+  if (!coords || coords.length < 2) return null;
 
-    // Create routing control
-    const routingControl = L.Routing.control({
-      waypoints,
-      routeWhileDragging: false,
-      show: true,
-      collapsible: true, // Allow collapsing so it doesn't block map
-      addWaypoints: false,
-      fitSelectedRoutes: true,
-      lineOptions: {
-        styles: [{ color: color || '#3b82f6', weight: 6, opacity: 0.8 }]
-      },
-      createMarker: function (i, wp, nWps) {
-        const color = i === 0 ? '#10b981' : '#ef4444'; // Green for Source, Red for Destination
-        const markerHtml = `<div style="background-color: ${color}; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 6px rgba(0,0,0,0.5);"></div>`;
-        return L.marker(wp.latLng, {
-          icon: L.divIcon({
-            className: 'custom-wp-marker',
-            html: markerHtml,
-            iconSize: [22, 22],
-            iconAnchor: [11, 11]
-          })
-        });
-      }
-    }).on('routesfound', function (e) {
-      if (e.routes && e.routes[0]) {
-        if (onRouteFound) onRouteFound(e.routes[0].coordinates);
-        if (onRouteSummary) onRouteSummary(e.routes[0].summary);
-      }
-    }).addTo(map);
+  // Risk-coloured outline + main line
+  const outlineColor = riskLevel === 'High' ? '#ef4444' : riskLevel === 'Low' ? '#10b981' : '#f59e0b';
 
-    return () => {
-      if (onRouteFound) onRouteFound([]);
-      if (onRouteSummary) onRouteSummary(null);
-      try { map.removeControl(routingControl); } catch (e) { /* ignore */ }
-    };
-  }, [map, route, onRouteFound, onRouteSummary]);
-
-  return null;
+  return (
+    <>
+      {/* Glow outline */}
+      <Polyline
+        positions={coords}
+        pathOptions={{ color: outlineColor, weight: 10, opacity: 0.25 }}
+      />
+      {/* Main line */}
+      <Polyline
+        positions={coords}
+        pathOptions={{ color: color || '#3b82f6', weight: 5, opacity: 0.9, dashArray: null }}
+      />
+    </>
+  );
 }
 
 function MapUpdater({ centerTo }) {
@@ -557,7 +555,20 @@ function MapUpdater({ centerTo }) {
   return null;
 }
 
-function NagpurMap({ pins, heatmap, route, routeColor, vehiclePos, onPinClick, activePin, onRouteSummary }) {
+// ============================================================
+// HAZARD TYPE CONFIG  (colour + emoji for each category)
+// ============================================================
+const HAZARD_CONFIG = {
+  Pothole:       { color: "#f59e0b", emoji: "??️" },
+  Accident:      { color: "#ef4444", emoji: "??" },
+  "Road Closure":{ color: "#8b5cf6", emoji: "??" },
+  Waterlogging:  { color: "#06b6d4", emoji: "??" },
+  Debris:        { color: "#6b7280", emoji: "?" },
+  "Stray Animals":{ color: "#10b981", emoji: "??" },
+  Other:         { color: "#e879f9", emoji: "?️" },
+};
+
+function NagpurMap({ pins, heatmap, safeCoords, safeColor, safeRisk, shortCoords, shortColor, vehiclePos, onPinClick, activePin, hazardPins, liveGpsPos }) {
   // Center of Nagpur
   const center = [21.1458, 79.0882];
   const [routeCoords, setRouteCoords] = useState([]);
@@ -588,7 +599,31 @@ function NagpurMap({ pins, heatmap, route, routeColor, vehiclePos, onPinClick, a
               iconAnchor: [12, 12]
             })}
           >
-            <Popup>📍 Your Exact Live Location</Popup>
+            <Popup>?? Your Exact Live Location</Popup>
+          </Marker>
+        )}
+
+        {/* Phase 5.1 ?? Live GPS tracking dot (watchPosition) */}
+        {liveGpsPos && (
+          <Marker
+            position={[liveGpsPos.lat, liveGpsPos.lng]}
+            icon={L.divIcon({
+              className: 'custom-gps-marker',
+              html: `
+                <div style="position:relative;width:24px;height:24px;">
+                  <div style="position:absolute;inset:0;border-radius:50%;background:rgba(6,182,212,0.25);animation:ripple 1.5s ease-out infinite;"></div>
+                  <div style="position:absolute;inset:4px;border-radius:50%;background:#06b6d4;border:2px solid white;box-shadow:0 0 12px rgba(6,182,212,0.8);"></div>
+                </div>`,
+              iconSize: [24, 24],
+              iconAnchor: [12, 12]
+            })}
+          >
+            <Popup>
+              📍 Live GPS<br/>
+              Lat: {liveGpsPos.lat.toFixed(5)}<br/>
+              Lng: {liveGpsPos.lng.toFixed(5)}<br/>
+              ±{Math.round(liveGpsPos.accuracy)} m
+            </Popup>
           </Marker>
         )}
         <LayersControl position="topright">
@@ -606,14 +641,26 @@ function NagpurMap({ pins, heatmap, route, routeColor, vehiclePos, onPinClick, a
           </LayersControl.BaseLayer>
         </LayersControl>
 
-        {route && <RoutingControl route={route} color={routeColor} onRouteFound={setRouteCoords} onRouteSummary={onRouteSummary} />}
+        {/* Shortest route (grey, behind) */}
+        {shortCoords && shortCoords.length > 1 && (
+          <Polyline
+            positions={shortCoords}
+            pathOptions={{ color: shortColor || '#6b7280', weight: 4, opacity: 0.5, dashArray: '8 6' }}
+          />
+        )}
 
-        {vehiclePos !== undefined && routeCoords && routeCoords.length > 0 && (
+        {/* Safe A* route (coloured, on top) */}
+        {safeCoords && safeCoords.length > 1 && (
+          <SafePolyline coords={safeCoords} color={safeColor} riskLevel={safeRisk} />
+        )}
+
+        {/* Moving vehicle dot along safe route */}
+        {vehiclePos !== undefined && safeCoords && safeCoords.length > 0 && (
           <Marker
-            position={routeCoords[Math.min(Math.floor((vehiclePos / 100) * routeCoords.length), routeCoords.length - 1)]}
+            position={safeCoords[Math.min(Math.floor((vehiclePos / 100) * safeCoords.length), safeCoords.length - 1)]}
             icon={L.divIcon({
               className: 'custom-car-marker',
-              html: `<div style="font-size: 24px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); display: flex; align-items: center; justify-content: center; transform: scaleX(-1);">🚕</div>`,
+              html: `<div style="font-size: 24px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); display: flex; align-items: center; justify-content: center; transform: scaleX(-1);">???</div>`,
               iconSize: [24, 24],
               iconAnchor: [12, 12]
             })}
@@ -637,6 +684,45 @@ function NagpurMap({ pins, heatmap, route, routeColor, vehiclePos, onPinClick, a
               radius={20 + intensity * 30}
               pathOptions={{ color: 'transparent', fillColor: color, fillOpacity: 0.25 }}
             />
+          );
+        })}
+
+        {/* ???? Phase 3: Hazard pins (real-time crowdsourced) ???? */}
+        {hazardPins && hazardPins.map((h, i) => {
+          const cfg = HAZARD_CONFIG[h.hazard_type] || HAZARD_CONFIG.Other;
+          return (
+            <CircleMarker
+              key={`hazard-${h.id ?? i}`}
+              center={[h.latitude, h.longitude]}
+              radius={9}
+              pathOptions={{
+                color: cfg.color,
+                weight: 3,
+                fillColor: cfg.color,
+                fillOpacity: 0.85,
+              }}
+            >
+              <Popup autoPan={false}>
+                <div style={{ fontSize: 13, minWidth: 170, fontFamily: "DM Sans, sans-serif" }}>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>
+                    {cfg.emoji} {h.hazard_type}
+                  </div>
+                  {h.description && (
+                    <div style={{ color: "#64748b", marginBottom: 4, fontSize: 12 }}>{h.description}</div>
+                  )}
+                  <div style={{ display: "flex", gap: 8, fontSize: 11, color: "#64748b" }}>
+                    <span>?? {h.upvotes ?? 0} upvotes</span>
+                    <span style={{
+                      color: h.status === "Verified" ? "#10b981" : h.status === "Rejected" ? "#ef4444" : "#f59e0b",
+                      fontWeight: 700,
+                    }}>{h.status}</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 4 }}>
+                    {new Date(h.created_at).toLocaleString()}
+                  </div>
+                </div>
+              </Popup>
+            </CircleMarker>
           );
         })}
 
@@ -730,12 +816,12 @@ function AuthPage({ onLogin }) {
         });
         const data = await res.json();
         if (!res.ok) { setErr(data.error || "Login failed"); setLoading(false); return; }
-        // Store JWT in localStorage — apiFetch will pick it up automatically
+        // Store JWT in localStorage ?? apiFetch will pick it up automatically
         localStorage.setItem("token", data.access_token);
         onLogin(data.user);
       }
     } catch (e) {
-      setErr("Network error — is the backend running?");
+      setErr("Network error ?? is the backend running?");
     } finally {
       setLoading(false);
     }
@@ -831,10 +917,11 @@ function AuthPage({ onLogin }) {
 // ============================================================
 function TopNav({ user, page, setPage, darkMode, setDarkMode, onLogout }) {
   const pages = [
-    { id: "dashboard", label: "Map", icon: Icon.Map },
-    { id: "navigation", label: "Navigate", icon: Icon.Nav },
-    { id: "risk", label: "Risk Analysis", icon: Icon.Risk },
-    { id: "admin", label: "Admin", icon: Icon.Admin },
+    { id: "dashboard",   label: "Map",         icon: Icon.Map },
+    { id: "navigation",  label: "Navigate",    icon: Icon.Nav },
+    { id: "risk",        label: "Risk Analysis",icon: Icon.Risk },
+    { id: "leaderboard", label: "Leaderboard",  icon: Icon.Trophy },
+    { id: "admin",       label: "Admin",        icon: Icon.Admin },
   ];
 
   return (
@@ -883,6 +970,136 @@ function TopNav({ user, page, setPage, darkMode, setDarkMode, onLogout }) {
 // ============================================================
 // DASHBOARD PAGE
 // ============================================================
+// ============================================================
+// REPORT HAZARD MODAL
+// ============================================================
+const HAZARD_TYPES = ["Pothole", "Accident", "Road Closure", "Waterlogging", "Debris", "Stray Animals", "Other"];
+
+function ReportHazardModal({ onClose, onSubmitted }) {
+  const [form, setForm] = useState({ hazard_type: "Pothole", description: "", latitude: "", longitude: "" });
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+  const [locating, setLocating] = useState(false);
+
+  // Auto-fill with current GPS location
+  const getLocation = () => {
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setForm(f => ({ ...f, latitude: pos.coords.latitude.toFixed(6), longitude: pos.coords.longitude.toFixed(6) }));
+        setLocating(false);
+      },
+      () => { setErr("Could not get location"); setLocating(false); }
+    );
+  };
+
+  const submit = async () => {
+    setErr("");
+    if (!form.latitude || !form.longitude) { setErr("Please set a location first"); return; }
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/hazards`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+        body: JSON.stringify({
+          hazard_type:  form.hazard_type,
+          description:  form.description,
+          latitude:     parseFloat(form.latitude),
+          longitude:    parseFloat(form.longitude),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setErr(data.error || "Submit failed"); setLoading(false); return; }
+      onSubmitted(data.hazard);
+      onClose();
+    } catch (e) {
+      setErr("Network error ?? is the backend running?");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 1000,
+      background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+    }}>
+      <div className="glass fade-in" style={{ width: "100%", maxWidth: 420, padding: 28, borderRadius: 18 }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+          <h3 style={{ fontSize: 17, display: "flex", alignItems: "center", gap: 8 }}>?️ Report a Hazard</h3>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 20 }}>??</button>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Hazard type */}
+          <div>
+            <label style={{ fontSize: 11, color: "var(--muted)", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>Hazard Type</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {HAZARD_TYPES.map(t => {
+                const cfg = HAZARD_CONFIG[t] || HAZARD_CONFIG.Other;
+                return (
+                  <button key={t} onClick={() => setForm(f => ({ ...f, hazard_type: t }))}
+                    style={{
+                      padding: "6px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer",
+                      border: `1px solid ${form.hazard_type === t ? cfg.color : "var(--border)"}`,
+                      background: form.hazard_type === t ? `${cfg.color}22` : "var(--surface2)",
+                      color: form.hazard_type === t ? cfg.color : "var(--muted)",
+                      fontWeight: form.hazard_type === t ? 700 : 400,
+                      transition: "all 0.15s",
+                    }}>{cfg.emoji} {t}</button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label style={{ fontSize: 11, color: "var(--muted)", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>Description (optional)</label>
+            <textarea className="input-field" rows={2}
+              placeholder="e.g. Large pothole near bus stop, right lane blocked..."
+              value={form.description}
+              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+              style={{ resize: "none" }}
+            />
+          </div>
+
+          {/* Location */}
+          <div>
+            <label style={{ fontSize: 11, color: "var(--muted)", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>Location</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input className="input-field" placeholder="Latitude"
+                value={form.latitude} onChange={e => setForm(f => ({ ...f, latitude: e.target.value }))}
+                style={{ flex: 1 }} />
+              <input className="input-field" placeholder="Longitude"
+                value={form.longitude} onChange={e => setForm(f => ({ ...f, longitude: e.target.value }))}
+                style={{ flex: 1 }} />
+            </div>
+            <button onClick={getLocation} disabled={locating}
+              style={{
+                marginTop: 8, padding: "7px 14px", borderRadius: 8, border: "1px solid var(--border)",
+                background: "var(--surface2)", color: "var(--text)", fontSize: 12, cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 6,
+              }}>
+              {locating ? "?? Locating..." : "?? Use My GPS Location"}
+            </button>
+          </div>
+
+          {err && <div style={{ color: "#ef4444", fontSize: 12, background: "rgba(239,68,68,0.1)", borderRadius: 8, padding: "8px 12px" }}>{err}</div>}
+
+          <button className="btn-primary" onClick={submit} disabled={loading}
+            style={{ width: "100%", padding: 12, marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            {loading
+              ? <><span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} /> Submitting...</>
+              : "?? Submit Hazard Report"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DashboardPage() {
   const [activePin, setActivePin] = useState(null);
   const [showHeat, setShowHeat] = useState(true);
@@ -892,11 +1109,49 @@ function DashboardPage() {
   const [apiPins, setApiPins] = useState([]);
   const [backendOk, setBackendOk] = useState(null);
 
+  //  Phase 3: Hazard state 
+  const [hazardPins, setHazardPins] = useState([]);        // all hazards shown on map
+  const [showHazards, setShowHazards] = useState(true);    // toggle layer
+  const [showHazardModal, setShowHazardModal] = useState(false);  // modal open/close
+  const [liveToast, setLiveToast] = useState(null);        // toast for incoming WS events
+  const socketRef = useRef(null);
+
   useEffect(() => {
     apiFetch("/health").then(d => setBackendOk(!!d?.status));
     apiFetch("/statistics").then(d => { if (d) setApiStats(d); });
     apiFetch("/dataset?limit=80").then(d => { if (d?.data) setApiPins(d.data); });
+
+    //  Load existing hazards from REST endpoint ??????????????????????????????
+    apiFetch("/hazards").then(d => { if (d?.hazards) setHazardPins(d.hazards); });
+
+    //  Connect to Flask-SocketIO ????????????????????????????????????????????????????????????
+    const socket = io("http://localhost:5000", { transports: ["websocket", "polling"] });
+    socketRef.current = socket;
+
+    socket.on("connect", () => console.log("[WS] Connected ?? id:", socket.id));
+    socket.on("disconnect", () => console.log("[WS] Disconnected"));
+
+    //  new_hazard: prepend instantly to the map ??????????????????????????????
+    socket.on("new_hazard", (hazard) => {
+      setHazardPins(prev => [hazard, ...prev]);
+      const cfg = HAZARD_CONFIG[hazard.hazard_type] || HAZARD_CONFIG.Other;
+      setLiveToast({ msg: `${cfg.emoji} New ${hazard.hazard_type} reported nearby!`, id: Date.now() });
+    });
+
+    //  hazard_updated: patch the existing hazard in state ??????????
+    socket.on("hazard_updated", (updated) => {
+      setHazardPins(prev => prev.map(h => h.id === updated.id ? updated : h));
+    });
+
+    return () => { socket.disconnect(); };
   }, []);
+
+  // Auto-dismiss toast after 4 s
+  useEffect(() => {
+    if (!liveToast) return;
+    const t = setTimeout(() => setLiveToast(null), 4000);
+    return () => clearTimeout(t);
+  }, [liveToast]);
 
   const pins = apiPins.length > 0 ? apiPins : DATASET.slice(0, 80);
   const displayPins = pins.filter(d => filter === "All" || d.risk_level === filter);
@@ -926,9 +1181,9 @@ function DashboardPage() {
           border: `1px solid ${backendOk === true ? "rgba(16,185,129,0.3)" : backendOk === false ? "rgba(239,68,68,0.3)" : "rgba(245,158,11,0.3)"}`,
           fontSize: 11, display: "flex", alignItems: "center", gap: 6
         }}>
-          <span style={{ color: backendOk === true ? "#10b981" : backendOk === false ? "#ef4444" : "#f59e0b" }}>●</span>
+          <span style={{ color: backendOk === true ? "#10b981" : backendOk === false ? "#ef4444" : "#f59e0b" }}>?</span>
           <span style={{ color: "var(--muted)" }}>
-            {backendOk === null ? "Connecting to backend..." : backendOk ? "Flask API connected" : "Backend offline — using local data"}
+            {backendOk === null ? "Connecting to backend..." : backendOk ? "Flask API connected" : "Backend offline ?? using local data"}
           </span>
         </div>
 
@@ -1003,21 +1258,84 @@ function DashboardPage() {
 
         <div style={{ marginTop: 20, padding: 12, background: "rgba(239,68,68,0.08)", borderRadius: 10, border: "1px solid rgba(239,68,68,0.2)" }}>
           <div style={{ fontSize: 11, color: "#ef4444", fontWeight: 700, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ animation: "pulse 1s infinite", display: "inline-block" }}>●</span> Live Alert
+            <span style={{ animation: "pulse 1s infinite", display: "inline-block" }}>?</span> Live Alert
           </div>
           <div style={{ fontSize: 12, color: "var(--text)" }}>High accident risk detected near <strong>Sitabuldi Junction</strong></div>
           <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>Rain + Night conditions · 87% risk</div>
         </div>
-      </div>
+          {/* Hazard layer toggle */}
+          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, marginTop: 4 }} onClick={() => setShowHazards(!showHazards)}>
+            <div style={{
+              width: 36, height: 20, borderRadius: 10,
+              background: showHazards ? "#f59e0b" : "var(--surface2)",
+              position: "relative", transition: "background 0.2s",
+              border: "1px solid var(--border)",
+            }}>
+              <div style={{
+                position: "absolute", top: 2, left: showHazards ? "calc(100% - 18px)" : 2,
+                width: 14, height: 14, borderRadius: "50%", background: "white",
+                transition: "left 0.2s",
+              }} />
+            </div>
+            <span>?️ Hazard Pins <span style={{ color: "var(--muted)", fontSize: 11 }}>({hazardPins.length})</span></span>
+          </label>
+        </div>
 
       {/* Map */}
       <div className="map-area">
+        {/* ???? Report Hazard floating button ???? */}
+        <button
+          id="report-hazard-btn"
+          onClick={() => setShowHazardModal(true)}
+          style={{
+            position: "absolute", bottom: 24, left: "50%", transform: "translateX(-50%)",
+            zIndex: 500,
+            background: "linear-gradient(135deg, #ef4444, #f59e0b)",
+            color: "white", border: "none", borderRadius: 28,
+            padding: "12px 24px", fontSize: 14, fontWeight: 700,
+            fontFamily: "Syne, sans-serif", cursor: "pointer",
+            boxShadow: "0 4px 24px rgba(239,68,68,0.45)",
+            display: "flex", alignItems: "center", gap: 8,
+            transition: "transform 0.15s, box-shadow 0.15s",
+            letterSpacing: "0.03em",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = "translateX(-50%) translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(239,68,68,0.55)"; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = "translateX(-50%)"; e.currentTarget.style.boxShadow = "0 4px 24px rgba(239,68,68,0.45)"; }}
+        >
+          ?? Report Hazard
+        </button>
+
+        {/* ???? Live toast notification ???? */}
+        {liveToast && (
+          <div key={liveToast.id} style={{
+            position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)",
+            zIndex: 600,
+            background: "rgba(245,158,11,0.95)", color: "white",
+            borderRadius: 12, padding: "10px 20px",
+            fontSize: 13, fontWeight: 600,
+            boxShadow: "0 4px 20px rgba(245,158,11,0.4)",
+            animation: "fadeIn 0.3s ease forwards",
+            whiteSpace: "nowrap",
+          }}>
+            {liveToast.msg}
+          </div>
+        )}
+
         <NagpurMap
           pins={showPins ? displayPins : []}
           heatmap={showHeat}
           activePin={activePin}
           onPinClick={(i) => setActivePin(activePin === i ? null : i)}
+          hazardPins={showHazards ? hazardPins : []}
         />
+
+        {/* Report Hazard Modal */}
+        {showHazardModal && (
+          <ReportHazardModal
+            onClose={() => setShowHazardModal(false)}
+            onSubmitted={(h) => setHazardPins(prev => [h, ...prev])}
+          />
+        )}
       </div>
 
       {/* Right panel */}
@@ -1128,8 +1446,12 @@ function LocationAutocomplete({ placeholder, value, onChange }) {
 function NavigationPage() {
   const [src, setSrc] = useState("");
   const [dst, setDst] = useState("");
-  const [routes, setRoutes] = useState(null);
+  const [routes, setRoutes] = useState(null);       // [{name,coords,color,risk,...}]
   const [selectedRoute, setSelectedRoute] = useState(0);
+  const [safeCoords,  setSafeCoords]  = useState(null);  // [[lat,lng],...] from A*
+  const [shortCoords, setShortCoords] = useState(null);  // [[lat,lng],...] shortest
+  const [routeLoading, setRouteLoading] = useState(false);
+  const [routeError,   setRouteError]   = useState("");
   const [vehiclePos, setVehiclePos] = useState(5);
   const [driving, setDriving] = useState(false);
   const [step, setStep] = useState(0);
@@ -1138,11 +1460,178 @@ function NavigationPage() {
   const [trafficData, setTrafficData] = useState(null);
   const driveRef = useRef(null);
 
+  //  Phase 5 Step 5.1: Live GPS Telematics 
+  const [gpsPos,       setGpsPos]       = useState(null);   // { lat, lng, accuracy }
+  const [gpsSpeed,     setGpsSpeed]     = useState(0);      // km/h (calculated)
+  const [gpsHeading,   setGpsHeading]   = useState(null);   // degrees (0-360)
+  const [gpsError,     setGpsError]     = useState("");
+  const [gpsTracking,  setGpsTracking]  = useState(false);
+  const [gpsFix,       setGpsFix]       = useState(false);  // true once first fix received
+  const prevGpsRef  = useRef(null);   // { lat, lng, ts } ?? for manual speed calc
+  const watchIdRef  = useRef(null);   // geolocation watchId
+
+  //  Phase 5 Step 5.2: Geo-fence Alerts ????????????????????????????????????????????????????????????????????????
+  const GEOFENCE_RADIUS_M = 500;   // metres
+  const [geoAlert,     setGeoAlert]    = useState(null); // { location, dist } | null
+  const [alertDismiss, setAlertDismiss] = useState(false); // user closed this alert
+  const lastAlertRef = useRef(null);  // name of zone currently alerting (avoid re-beep)
+  const audioCtxRef  = useRef(null);  // Web Audio context (lazy-init)
+
+  // Pre-compute the list of unique High-Risk locations (name + coords) once
+  const HIGH_RISK_PINS = (() => {
+    const seen = new Set();
+    return DATASET
+      .filter(d => d.risk_level === "High")
+      .reduce((acc, d) => {
+        const key = `${parseFloat(d.latitude).toFixed(3)},${parseFloat(d.longitude).toFixed(3)}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          acc.push({ name: d.location, lat: parseFloat(d.latitude), lng: parseFloat(d.longitude) });
+        }
+        return acc;
+      }, []);
+  })();
+
+  // Play a short alarm using Web Audio API (no external file needed)
+  const playAlarm = () => {
+    try {
+      if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = audioCtxRef.current;
+      const playBeep = (freq, startT, duration) => {
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = "square";
+        osc.frequency.setValueAtTime(freq, startT);
+        gain.gain.setValueAtTime(0.35, startT);
+        gain.gain.exponentialRampToValueAtTime(0.001, startT + duration);
+        osc.start(startT); osc.stop(startT + duration);
+      };
+      const t = ctx.currentTime;
+      // Three descending beeps: 880 Hz ?? 660 Hz ?? 440 Hz
+      playBeep(880, t,       0.18);
+      playBeep(660, t + 0.2, 0.18);
+      playBeep(440, t + 0.4, 0.28);
+    } catch (e) { console.warn("Audio error:", e); }
+  };
+  //  end geo-fence ??????????????????????????????????????????????????????????????????????????????????????????????????????????
+
+  // Haversine distance in metres between two lat/lng points
+  const haversineM = (la1, lo1, la2, lo2) => {
+    const R = 6_371_000;
+    const dLat = (la2 - la1) * Math.PI / 180;
+    const dLon = (lo2 - lo1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLon/2)**2;
+    return 2 * R * Math.asin(Math.sqrt(a));
+  };
+
+  // Start / stop GPS watch
+  const startGPS = () => {
+    if (!navigator.geolocation) { setGpsError("Geolocation not supported by this browser."); return; }
+    setGpsError("");
+    setGpsTracking(true);
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude: lat, longitude: lng, speed, heading, accuracy } = pos.coords;
+        const ts = pos.timestamp;
+
+        // Use browser-provided speed (m/s) when available, else calculate from positions
+        let kmh = 0;
+        if (speed !== null && speed >= 0) {
+          kmh = speed * 3.6;
+        } else if (prevGpsRef.current) {
+          const dt = (ts - prevGpsRef.current.ts) / 1000;  // seconds
+          if (dt > 0) {
+            const dm = haversineM(prevGpsRef.current.lat, prevGpsRef.current.lng, lat, lng);
+            kmh = (dm / dt) * 3.6;
+          }
+        }
+
+        // Clamp to sane road speed (GPS noise can produce spikes)
+        kmh = Math.min(Math.round(kmh * 10) / 10, 200);
+
+        prevGpsRef.current = { lat, lng, ts };
+        setGpsPos({ lat, lng, accuracy });
+        setGpsSpeed(kmh);
+        setGpsHeading(heading);
+        setGpsFix(true);
+
+        //  Step 5.2: Geo-fence check ????????????????????????????????????????????????????????????????????????????
+        let nearest = null;
+        let nearestDist = Infinity;
+        for (const pin of HIGH_RISK_PINS) {
+          const d = haversineM(lat, lng, pin.lat, pin.lng);
+          if (d <= GEOFENCE_RADIUS_M && d < nearestDist) {
+            nearestDist = d;
+            nearest = pin;
+          }
+        }
+        if (nearest) {
+          // Only beep + reset dismiss when entering a NEW zone
+          if (lastAlertRef.current !== nearest.name) {
+            lastAlertRef.current = nearest.name;
+            setAlertDismiss(false);
+            playAlarm();
+          }
+          setGeoAlert({ location: nearest.name, dist: Math.round(nearestDist) });
+        } else {
+          lastAlertRef.current = null;
+          setGeoAlert(null);
+        }
+      },
+      (err) => {
+        const msgs = ["", "Permission denied", "Position unavailable", "Timeout"];
+        setGpsError(`GPS error: ${msgs[err.code] || err.message}`);
+        setGpsTracking(false);
+      },
+      { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
+    );
+  };
+
+  const stopGPS = () => {
+    if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
+    setGpsTracking(false);
+    setGpsSpeed(0);
+  };
+
+  // Clean up watch on unmount
+  useEffect(() => () => { if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current); }, []);
+
+  //  Step 5.3: Speed-in-zone score deduction (throttled to 1 call per 30 s) ????
+  const lastDeductRef = useRef(0);
+  useEffect(() => {
+    if (!geoAlert || !gpsTracking) return;           // only when inside a zone
+    const SAFE_SPEED_KMH = 40;                       // speed limit inside risk zones
+    if (gpsSpeed <= SAFE_SPEED_KMH) return;          // under the limit ?? no penalty
+    const now = Date.now();
+    if (now - lastDeductRef.current < 30_000) return;// throttle: max once per 30 s
+    lastDeductRef.current = now;
+
+    // Deduction scales with excess speed: 1 pt per 10 km/h over limit (max 10 pts)
+    const excess    = gpsSpeed - SAFE_SPEED_KMH;
+    const deduction = Math.min(10, Math.max(1, Math.round(excess / 10)));
+
+    apiFetch("/score/deduct", {
+      method: "POST",
+      body: JSON.stringify({
+        deduction,
+        reason:    "Speeding in high-risk zone",
+        zone:      geoAlert.location,
+        speed_kmh: gpsSpeed,
+      }),
+    }).then(res => {
+      if (res?.new_score !== undefined)
+        console.log(`[SCORE] -${deduction} pts -> ${res.new_score} (${gpsSpeed.toFixed(1)} km/h in ${geoAlert.location})`);
+    });
+  }, [geoAlert, gpsSpeed, gpsTracking]);
+  //  end score deduction ??????????????????????????????????????????????????????????????????????????????????????????????????????
+  //  end GPS telematics ??????????????????????????????????????????????????????????????????????????????????????????????????????
+
   useEffect(() => {
     // Fetch live weather via our Flask backend (OpenWeatherMap)
-    const W_ICONS = { Clear: "☀️", Cloudy: "⛅", Fog: "🌫️", Haze: "🌁", Rain: "🌧️" };
+    const W_ICONS = { Clear: "??️", Cloudy: "??", Fog: "??️", Haze: "??", Rain: "??️" };
     apiFetch("/live-weather?lat=21.1458&lon=79.0882").then(d => {
-      if (d?.weather) setWeatherData({ temp: d.temperature, text: d.weather, icon: W_ICONS[d.weather] || "☀️", humidity: d.humidity });
+      if (d?.weather) setWeatherData({ temp: d.temperature, text: d.weather, icon: W_ICONS[d.weather] || "??️", humidity: d.humidity });
     });
     // Fetch live traffic via our Flask backend (TomTom)
     apiFetch("/live-traffic?lat=21.1458&lon=79.0882").then(d => {
@@ -1162,77 +1651,98 @@ function NavigationPage() {
   }
 
   const findRoutes = async () => {
+    setRouteError("");
+    setSafeCoords(null);
+    setShortCoords(null);
+    setRoutes(null);
+
     const getLoc = async (val) => {
       if (!val) return null;
       val = val.trim();
-      const exactMatch = NAGPUR_LOCATIONS.find(l => l.name.toLowerCase() === val.toLowerCase());
-      if (exactMatch) return exactMatch;
-
+      const exact = NAGPUR_LOCATIONS.find(l => l.name.toLowerCase() === val.toLowerCase());
+      if (exact) return exact;
       const coords = val.split(',').map(s => parseFloat(s.trim()));
-      if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+      if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1]))
         return { lat: coords[0], lng: coords[1], name: "Custom Location" };
-      }
-
       return await geocode(val);
     };
 
     const srcLoc = await getLoc(src);
     const dstLoc = await getLoc(dst);
+    if (!srcLoc || !dstLoc) { setRouteError("Could not find one or both locations."); return; }
 
-    if (!srcLoc || !dstLoc) return;
+    setRouteLoading(true);
+    try {
+      // Phase 4.3: A* backend — 60 s timeout (graph loads on first request)
+      const [safeRes, shortRes] = await Promise.all([
+        apiFetch("/route", {
+          method: "POST",
+          body: JSON.stringify({
+            origin_lat: srcLoc.lat, origin_lng: srcLoc.lng,
+            dest_lat:   dstLoc.lat, dest_lng:   dstLoc.lng,
+            risk_penalty: 500,
+          }),
+        }, 60000),
+        apiFetch("/route", {
+          method: "POST",
+          body: JSON.stringify({
+            origin_lat: srcLoc.lat, origin_lng: srcLoc.lng,
+            dest_lat:   dstLoc.lat, dest_lng:   dstLoc.lng,
+            risk_penalty: 0,
+          }),
+        }, 60000),
+      ]);
 
-    // Step 2.3: backend auto-fetches weather+traffic; we only send lat/lng + road_type
-    // Route 1: Fastest (Highway)
-    const r1Pred = await apiFetch("/predict", {
-      method: "POST",
-      body: JSON.stringify({ latitude: srcLoc.lat, longitude: srcLoc.lng, road_type: "Highway" }),
-    });
-    // Route 2: Safest (Urban)
-    const r2Pred = await apiFetch("/predict", {
-      method: "POST",
-      body: JSON.stringify({ latitude: srcLoc.lat, longitude: srcLoc.lng, road_type: "Urban" }),
-    });
+      // Both timed out / failed — give the user a clear retry message
+      if (!safeRes && !shortRes) {
+        setRouteError(
+          "Road network is loading (first run can take 30-60 s). Please try again in a moment."
+        );
+        return;
+      }
 
-    const toResult = (pred) => pred
-      ? { level: pred.risk_level, highPct: pred.probabilities?.High ?? 50, medPct: pred.probabilities?.Medium ?? 30, lowPct: pred.probabilities?.Low ?? 20 }
-      : predictRisk({ hour: new Date().getHours(), weather: "Clear", roadType: "Highway", density: "Low", lat: srcLoc.lat, lng: srcLoc.lng });
+      // Fallback risk prediction if backend is offline
+      const fallback = (road) => predictRisk({
+        hour: new Date().getHours(), weather: "Clear",
+        roadType: road, density: "Low",
+        lat: srcLoc.lat, lng: srcLoc.lng,
+      });
 
-    const r1 = {
-      name: "Fastest Route",
-      time: "18 min",
-      dist: "8.2 km",
-      risk: toResult(r1Pred),
-      color: "#3b82f6",
-      waypoints: [
-        { lat: srcLoc.lat, lng: srcLoc.lng },
-        { lat: dstLoc.lat, lng: dstLoc.lng },
-      ],
-    };
+      const toRisk = (res, road) => res
+        ? { level: res.risk_level, highPct: Math.round((res.avg_risk_score || 0.3) * 100), medPct: 30, lowPct: 20 }
+        : fallback(road);
 
-    // Create a slight detour for the safest route to visually separate it
-    const midLat = srcLoc.lat + (dstLoc.lat - srcLoc.lat) * 0.5;
-    const midLng = srcLoc.lng + (dstLoc.lng - srcLoc.lng) * 0.5;
-    const dLat = dstLoc.lat - srcLoc.lat;
-    const dLng = dstLoc.lng - srcLoc.lng;
-    const addLat = -dLng * 0.25;
-    const addLng = dLat * 0.25;
+      const r1 = {
+        name: "Safest Route",
+        dist: safeRes  ? `${safeRes.total_distance_km} km`  : "--",
+        time: safeRes  ? `~${Math.round(safeRes.total_distance_km / 0.3)} min` : "--",
+        risk: toRisk(safeRes, "Urban"),
+        color: "#10b981",
+        coords: safeRes?.route_coords  || null,
+        backendOk: !!safeRes,
+      };
+      const r2 = {
+        name: "Shortest Route",
+        dist: shortRes ? `${shortRes.total_distance_km} km` : "--",
+        time: shortRes ? `~${Math.round(shortRes.total_distance_km / 0.35)} min` : "--",
+        risk: toRisk(shortRes, "Highway"),
+        color: "#6b7280",
+        coords: shortRes?.route_coords || null,
+        backendOk: !!shortRes,
+      };
 
-    const r2 = {
-      name: "Safest Route",
-      time: "22 min",
-      dist: "9.8 km",
-      risk: toResult(r2Pred),
-      color: "#10b981",
-      waypoints: [
-        { lat: srcLoc.lat, lng: srcLoc.lng },
-        { lat: midLat + addLat, lng: midLng + addLng }, // Detour waypoint
-        { lat: dstLoc.lat, lng: dstLoc.lng },
-      ],
-    };
-    setRoutes([r1, r2]);
-    setSelectedRoute(r1.risk.level === "High" ? 1 : 0);
-    setVehiclePos(5);
+      setRoutes([r1, r2]);
+      setSafeCoords(r1.coords);
+      setShortCoords(r2.coords);
+      setSelectedRoute(0);
+      setVehiclePos(5);
+    } catch (e) {
+      setRouteError("Routing failed — is the backend running?");
+    } finally {
+      setRouteLoading(false);
+    }
   };
+
 
   const startDrive = () => {
     setDriving(true);
@@ -1294,20 +1804,23 @@ function NavigationPage() {
                 } else {
                   alert("Geolocation is not supported by your browser.");
                 }
-              }}>📍</button>
+              }}>??</button>
           </div>
           <div style={{ position: "relative" }}>
             <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 8, height: 8, borderRadius: "50%", background: "#ef4444", zIndex: 2 }} />
             <LocationAutocomplete placeholder="Destination..." value={dst} onChange={setDst} />
           </div>
-          <button className="btn-primary" style={{ width: "100%" }} onClick={findRoutes}>Find Routes</button>
+          <button className="btn-primary" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={findRoutes} disabled={routeLoading}>
+            {routeLoading ? <><span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} /> Computing A* Route...</> : "??️ Find Safe Route"}
+          </button>
+          {routeError && <div style={{ fontSize: 12, color: "#ef4444", background: "rgba(239,68,68,0.1)", borderRadius: 8, padding: "8px 12px" }}>{routeError}</div>}
         </div>
 
         {/* Routes */}
         {routes && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
             {routes.map((r, i) => (
-              <div key={i} onClick={() => { setSelectedRoute(i); setDynamicSummary(null); }} style={{
+              <div key={i} onClick={() => { setSelectedRoute(i); }} style={{
                 padding: 12, borderRadius: 10, cursor: "pointer",
                 border: `2px solid ${selectedRoute === i ? r.color : "var(--border)"}`,
                 background: selectedRoute === i ? `${r.color}15` : "var(--surface2)",
@@ -1317,9 +1830,10 @@ function NavigationPage() {
                   <span style={{ fontWeight: 700, fontSize: 13, color: selectedRoute === i ? r.color : "var(--text)" }}>{r.name}</span>
                   <span className={`risk-badge risk-${r.risk.level}`}>{r.risk.level}</span>
                 </div>
+                {!r.backendOk && <div style={{ fontSize: 10, color: "#f59e0b", marginBottom: 4 }}>? Backend offline ?? estimated values</div>}
                 <div style={{ display: "flex", gap: 16, fontSize: 12, color: "var(--muted)" }}>
-                  <span>⏱ {selectedRoute === i && dynamicSummary ? Math.round(dynamicSummary.totalTime / 60) + " min" : r.time}</span>
-                  <span>📍 {selectedRoute === i && dynamicSummary ? (dynamicSummary.totalDistance / 1000).toFixed(1) + " km" : r.dist}</span>
+                  <span>⏱ {r.time}</span>
+                  <span>?? {r.dist}</span>
                 </div>
                 <div style={{ marginTop: 8 }}>
                   <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>Risk: {r.risk.highPct}% High · {r.risk.medPct}% Medium</div>
@@ -1339,7 +1853,7 @@ function NavigationPage() {
             )}
             {driving && (
               <div style={{ padding: 12, background: "rgba(59,130,246,0.1)", borderRadius: 10, border: "1px solid rgba(59,130,246,0.3)", textAlign: "center", fontSize: 13 }}>
-                <span style={{ animation: "pulse 1s infinite", display: "inline-block" }}>●</span> Navigating...
+                <span style={{ animation: "pulse 1s infinite", display: "inline-block" }}>?</span> Navigating...
               </div>
             )}
           </div>
@@ -1365,11 +1879,107 @@ function NavigationPage() {
         <NagpurMap
           pins={DATASET.slice(0, 40)}
           heatmap={false}
-          route={routes ? routes[selectedRoute].waypoints : null}
-          routeColor={routes ? routes[selectedRoute].color : null}
+          safeCoords={safeCoords}
+          safeColor="#10b981"
+          safeRisk={routes?.[0]?.risk?.level}
+          shortCoords={shortCoords}
+          shortColor="#6b7280"
           vehiclePos={driving ? vehiclePos : undefined}
-          onRouteSummary={setDynamicSummary}
+          liveGpsPos={gpsPos}
         />
+
+        {/* ???? GPS Speed HUD overlay ???? */}
+        {gpsTracking && gpsFix && (
+          <div style={{
+            position: "absolute", bottom: 80, right: 16, zIndex: 500,
+            background: "rgba(10,14,26,0.92)", backdropFilter: "blur(12px)",
+            border: "1px solid rgba(99,170,255,0.2)", borderRadius: 16,
+            padding: "16px 20px", minWidth: 130, textAlign: "center",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+          }}>
+            {/* Circular speedometer arc */}
+            <svg width="90" height="90" viewBox="0 0 90 90" style={{ display: "block", margin: "0 auto 8px" }}>
+              {/* Track */}
+              <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(99,170,255,0.12)" strokeWidth="7" />
+              {/* Speed arc: max 120 km/h maps to 270° sweep */}
+              <circle cx="45" cy="45" r="36" fill="none"
+                stroke={gpsSpeed > 80 ? "#ef4444" : gpsSpeed > 50 ? "#f59e0b" : "#10b981"}
+                strokeWidth="7" strokeLinecap="round"
+                strokeDasharray={`${Math.min(gpsSpeed / 120, 1) * 226} 226`}
+                strokeDashoffset="56.5"
+                style={{ transition: "stroke-dasharray 0.6s ease, stroke 0.4s" }}
+              />
+              {/* Speed text */}
+              <text x="45" y="41" textAnchor="middle" fill="white"
+                style={{ fontSize: 22, fontFamily: "Syne, sans-serif", fontWeight: 700 }}>
+                {Math.round(gpsSpeed)}
+              </text>
+              <text x="45" y="55" textAnchor="middle" fill="#64748b"
+                style={{ fontSize: 9, fontFamily: "DM Sans, sans-serif" }}>km/h</text>
+            </svg>
+            <div style={{ fontSize: 10, color: "#64748b", letterSpacing: "0.06em", textTransform: "uppercase" }}>Live Speed</div>
+            {gpsHeading !== null && (
+              <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 4 }}>
+                {["N","NE","E","SE","S","SW","W","NW"][Math.round(gpsHeading/45)%8]} · {Math.round(gpsHeading)}°
+              </div>
+            )}
+          </div>
+        )}
+        {/* ???? Step 5.2: Geo-fence pulsing red alert overlay ???? */}
+        {geoAlert && !alertDismiss && (
+          <div style={{
+            position: "absolute", inset: 0, zIndex: 600,
+            pointerEvents: "none",
+            // Pulsing red vignette border
+            boxShadow: "inset 0 0 60px 20px rgba(239,68,68,0.45)",
+            animation: "geofencePulse 1s ease-in-out infinite",
+            borderRadius: 0,
+          }}>
+            {/* Central alert banner */}
+            <div style={{
+              position: "absolute",
+              top: 24, left: "50%", transform: "translateX(-50%)",
+              pointerEvents: "all",
+              background: "rgba(239,68,68,0.97)",
+              backdropFilter: "blur(12px)",
+              borderRadius: 16,
+              padding: "18px 28px",
+              textAlign: "center",
+              boxShadow: "0 8px 40px rgba(239,68,68,0.6), 0 0 0 2px rgba(239,68,68,0.8)",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+              minWidth: 280, maxWidth: 420,
+            }}>
+              {/* Warning icon */}
+              <div style={{ fontSize: 36, animation: "pulse 0.8s ease-in-out infinite" }}>?️</div>
+              <div style={{
+                fontFamily: "Syne, sans-serif", fontWeight: 800,
+                fontSize: 17, color: "white", letterSpacing: "0.02em",
+              }}>HIGH RISK ZONE DETECTED</div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", fontWeight: 500 }}>
+                ?? {geoAlert.location}
+              </div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
+                You are {geoAlert.dist} m from a high-risk accident blackspot.
+              </div>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontStyle: "italic" }}>
+                Reduce speed · Stay alert · Watch for hazards
+              </div>
+              <button
+                onClick={() => setAlertDismiss(true)}
+                style={{
+                  marginTop: 6, padding: "7px 22px",
+                  background: "rgba(255,255,255,0.2)",
+                  border: "1px solid rgba(255,255,255,0.5)",
+                  borderRadius: 8, color: "white",
+                  fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 12,
+                  cursor: "pointer", letterSpacing: "0.04em",
+                }}
+              >Dismiss</button>
+            </div>
+          </div>
+        )}
+
+        {/* You have arrived overlay */}
         {step === 3 && (
           <div style={{
             position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
@@ -1388,48 +1998,127 @@ function NavigationPage() {
         )}
       </div>
 
-      {/* Right */}
+      {/* Right panel ?? Live GPS Telematics (Phase 5.1) */}
       <div className="rightpanel">
-        <h3 style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted)" }}>Live Conditions</h3>
+        <h3 style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted)" }}>Live Telematics</h3>
 
+        {/* GPS tracking toggle */}
+        <div style={{ marginBottom: 16 }}>
+          <button
+            onClick={gpsTracking ? stopGPS : startGPS}
+            style={{
+              width: "100%", padding: "11px 0", borderRadius: 10, border: "none", cursor: "pointer",
+              fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13,
+              background: gpsTracking
+                ? "linear-gradient(135deg,#ef4444,#f59e0b)"
+                : "linear-gradient(135deg,#3b82f6,#06b6d4)",
+              color: "white",
+              boxShadow: gpsTracking ? "0 4px 16px rgba(239,68,68,0.35)" : "0 4px 16px rgba(59,130,246,0.35)",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              transition: "all 0.2s",
+            }}
+          >
+            <span style={{ fontSize: 16 }}>{gpsTracking ? "⏹" : "??"}</span>
+            {gpsTracking ? "Stop GPS" : "Start Live GPS"}
+          </button>
+          {gpsError && <div style={{ marginTop: 8, fontSize: 11, color: "#ef4444", background: "rgba(239,68,68,0.1)", borderRadius: 8, padding: "6px 10px" }}>{gpsError}</div>}
+        </div>
+
+        {/* GPS Status */}
         <div className="stat-card" style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>Current Weather</div>
+          <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 8 }}>GPS Status</div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ fontSize: 28 }}>{weatherData ? weatherData.icon : "☀️"}</div>
+            <div style={{
+              width: 36, height: 36, borderRadius: "50%",
+              background: gpsFix ? "rgba(16,185,129,0.15)" : "rgba(100,116,139,0.15)",
+              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18,
+            }}>??</div>
             <div>
-              <div style={{ fontWeight: 700, fontSize: 16 }}>{weatherData ? weatherData.text : "Clear"}</div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>{weatherData ? weatherData.temp : 28}°C · Humidity {weatherData ? weatherData.humidity : 50}%</div>
+              <div style={{ fontWeight: 700, fontSize: 13, color: gpsFix ? "#10b981" : "var(--muted)" }}>
+                {!gpsTracking ? "Idle" : !gpsFix ? "Acquiring fix..." : "Fixed"}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--muted)" }}>
+                {gpsPos ? `±${Math.round(gpsPos.accuracy)} m accuracy` : "??"}
+              </div>
             </div>
           </div>
         </div>
 
+        {/* Speed gauge card */}
         <div className="stat-card" style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>Traffic Density · <span style={{ color: "#06b6d4" }}>Live TomTom</span></div>
+          <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 8 }}>Current Speed</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+            <span style={{
+              fontSize: 42, fontFamily: "Syne, sans-serif", fontWeight: 800, lineHeight: 1,
+              color: gpsSpeed > 80 ? "#ef4444" : gpsSpeed > 50 ? "#f59e0b" : gpsTracking ? "#10b981" : "var(--muted)",
+              transition: "color 0.3s",
+            }}>{Math.round(gpsSpeed)}</span>
+            <span style={{ fontSize: 13, color: "var(--muted)" }}>km/h</span>
+          </div>
+          {/* Speed bar */}
+          <div className="progress-track" style={{ marginTop: 10 }}>
+            <div className="progress-fill" style={{
+              width: `${Math.min(gpsSpeed / 120 * 100, 100)}%`,
+              background: gpsSpeed > 80 ? "#ef4444" : gpsSpeed > 50 ? "#f59e0b" : "#10b981",
+              transition: "width 0.5s ease, background 0.3s",
+            }} />
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--muted)", marginTop: 4 }}>
+            <span>0</span><span>40</span><span>80</span><span>120 km/h</span>
+          </div>
+          {gpsSpeed > 80 && <div style={{ marginTop: 8, fontSize: 11, color: "#ef4444", fontWeight: 700 }}>? Reduce speed!</div>}
+        </div>
+
+        {/* Coordinates */}
+        <div className="stat-card" style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 8 }}>Live Coordinates</div>
+          {gpsPos ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <div style={{ fontFamily: "monospace", fontSize: 12 }}>
+                <span style={{ color: "var(--muted)" }}>LAT</span> {gpsPos.lat.toFixed(5)}
+              </div>
+              <div style={{ fontFamily: "monospace", fontSize: 12 }}>
+                <span style={{ color: "var(--muted)" }}>LNG</span> {gpsPos.lng.toFixed(5)}
+              </div>
+              {gpsHeading !== null && (
+                <div style={{ fontFamily: "monospace", fontSize: 12 }}>
+                  <span style={{ color: "var(--muted)" }}>HDG</span> {Math.round(gpsHeading)}°
+                  &nbsp;{["N","NE","E","SE","S","SW","W","NW"][Math.round(gpsHeading/45)%8]}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ fontSize: 12, color: "var(--muted)" }}>Start GPS tracking to see coordinates</div>
+          )}
+        </div>
+
+        {/* Weather */}
+        <div className="stat-card" style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>Weather</div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ fontSize: 24 }}>🚦</div>
+            <div style={{ fontSize: 24 }}>{weatherData ? weatherData.icon : "??️"}</div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 14 }}>{weatherData ? weatherData.text : "Clear"}</div>
+              <div style={{ fontSize: 11, color: "var(--muted)" }}>{weatherData ? weatherData.temp : 28}°C · {weatherData ? weatherData.humidity : 50}% humidity</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Traffic */}
+        <div className="stat-card">
+          <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>Traffic · <span style={{ color: "#06b6d4" }}>TomTom</span></div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ fontSize: 20 }}>??</div>
             <div>
               <div style={{ fontWeight: 700, color: trafficData?.traffic_density === "High" ? "#ef4444" : trafficData?.traffic_density === "Low" ? "#10b981" : "#f59e0b" }}>
-                {trafficData?.traffic_density || "Loading..."}
+                {trafficData?.traffic_density || "??"}
               </div>
-              <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                {trafficData ? `${trafficData.current_speed} km/h · ${Math.round(trafficData.congestion_ratio * 100)}% congestion` : "Fetching from TomTom..."}
+              <div style={{ fontSize: 11, color: "var(--muted)" }}>
+                {trafficData ? `${trafficData.current_speed} km/h road speed` : "Loading..."}
               </div>
             </div>
           </div>
         </div>
-
-        <h3 style={{ fontSize: 13, fontWeight: 700, margin: "16px 0 12px", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted)" }}>Safety Tips</h3>
-        {[
-          { icon: "💧", tip: "Rain detected. Reduce speed to 40 km/h." },
-          { icon: "👁️", tip: "Low visibility ahead. Use fog lights." },
-          { icon: "🔴", tip: "High-risk junction at Sitabuldi. Stay alert." },
-          { icon: "🚑", tip: "Keep emergency contacts ready." },
-        ].map((t, i) => (
-          <div key={i} style={{ display: "flex", gap: 10, padding: "10px 0", borderBottom: "1px solid var(--border)", fontSize: 12 }}>
-            <span>{t.icon}</span>
-            <span style={{ color: "var(--muted)", lineHeight: 1.5 }}>{t.tip}</span>
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -1468,7 +2157,7 @@ function RiskPage() {
         source: "flask",
       });
     } else {
-      setApiError("Backend offline — using local simulation");
+      setApiError("Backend offline ?? using local simulation");
       const hour = new Date().getHours();
       const pred = predictRisk({ hour, weather: "Clear", roadType: "City Road", density: "Low", lat: loc.lat, lng: loc.lng });
       setResult({ ...pred, source: "local" });
@@ -1484,7 +2173,7 @@ function RiskPage() {
   const density = usedInputs.traffic_density ?? "Low";
 
   const factors = result ? [
-    { label: "Time of Day", value: hour >= 20 || hour <= 5 ? `${hour}:00 — Night` : hour >= 17 ? `${hour}:00 — Evening` : `${hour}:00 — Day`, score: hour >= 20 || hour <= 5 ? 85 : hour >= 17 ? 50 : 20, color: hour >= 20 || hour <= 5 ? "#ef4444" : hour >= 17 ? "#f59e0b" : "#10b981" },
+    { label: "Time of Day", value: hour >= 20 || hour <= 5 ? `${hour}:00 ?? Night` : hour >= 17 ? `${hour}:00 ?? Evening` : `${hour}:00 ?? Day`, score: hour >= 20 || hour <= 5 ? 85 : hour >= 17 ? 50 : 20, color: hour >= 20 || hour <= 5 ? "#ef4444" : hour >= 17 ? "#f59e0b" : "#10b981" },
     { label: "Weather ⮐ Live OWM", value: weather, score: weather === "Rain" ? 75 : weather === "Fog" ? 90 : weather === "Haze" ? 60 : weather === "Cloudy" ? 35 : 20, color: ["Rain", "Fog", "Haze"].includes(weather) ? "#f59e0b" : "#10b981" },
     { label: "Road Type", value: roadType, score: ["Junction", "Highway", "Flyover"].includes(roadType) ? 70 : 35, color: ["Junction", "Highway"].includes(roadType) ? "#ef4444" : "#10b981" },
     { label: "Traffic ⮐ Live TomTom", value: density, score: density === "High" ? 80 : density === "Medium" ? 50 : 20, color: density === "High" ? "#ef4444" : density === "Medium" ? "#f59e0b" : "#10b981" },
@@ -1509,12 +2198,12 @@ function RiskPage() {
 
           <div style={{ padding: "12px 14px", background: "rgba(6,182,212,0.07)", border: "1px solid rgba(6,182,212,0.2)", borderRadius: 10, fontSize: 12, lineHeight: 1.8 }}>
             <div style={{ color: "#06b6d4", fontWeight: 700, fontSize: 11, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ animation: "pulse 2s infinite", display: "inline-block" }}>⚡</span> LIVE DATA MODE ACTIVE
+              <span style={{ animation: "pulse 2s infinite", display: "inline-block" }}>?</span> LIVE DATA MODE ACTIVE
             </div>
             <div style={{ color: "var(--muted)" }}>
-              🌤️ Weather → <strong style={{ color: "var(--text)" }}>OpenWeatherMap API</strong><br />
-              🚦 Traffic → <strong style={{ color: "var(--text)" }}>TomTom Traffic API</strong><br />
-              ⏰ Time → <strong style={{ color: "var(--text)" }}>Current server clock</strong>
+              ??️ Weather ?? <strong style={{ color: "var(--text)" }}>OpenWeatherMap API</strong><br />
+              ?? Traffic ?? <strong style={{ color: "var(--text)" }}>TomTom Traffic API</strong><br />
+              ⏰ Time ?? <strong style={{ color: "var(--text)" }}>Current server clock</strong>
             </div>
           </div>
 
@@ -1524,17 +2213,17 @@ function RiskPage() {
                 <span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} />
                 Fetching Live Data...
               </span>
-            ) : "🤖 Analyze Live Risk"}
+            ) : "?? Analyze Live Risk"}
           </button>
 
           {apiError && (
             <div style={{ padding: "8px 10px", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 8, fontSize: 11, color: "#f59e0b" }}>
-              ⚠️ {apiError}
+              ?️ {apiError}
             </div>
           )}
           {result?.source && (
             <div style={{ padding: "8px 10px", background: result.source === "flask" ? "rgba(16,185,129,0.1)" : "rgba(100,116,139,0.1)", border: `1px solid ${result.source === "flask" ? "rgba(16,185,129,0.3)" : "rgba(100,116,139,0.3)"}`, borderRadius: 8, fontSize: 11, color: result.source === "flask" ? "#10b981" : "var(--muted)", display: "flex", alignItems: "center", gap: 6 }}>
-              <span>●</span>
+              <span>?</span>
               {result.source === "flask" ? "Live result from Flask Random Forest model" : "Local simulation (backend offline)"}
             </div>
           )}
@@ -1553,7 +2242,7 @@ function RiskPage() {
       <div style={{ flex: 1, overflow: "auto", padding: 24, paddingLeft: 320, paddingRight: 340 }}>
         {!result && !loading && (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60vh", gap: 16, color: "var(--muted)", textAlign: "center" }}>
-            <div style={{ fontSize: 48, opacity: 0.3 }}>🤖</div>
+            <div style={{ fontSize: 48, opacity: 0.3 }}>??</div>
             <div style={{ fontSize: 15, fontFamily: "Syne, sans-serif" }}>Configure parameters and run prediction</div>
             <div style={{ fontSize: 13 }}>The AI will analyze accident risk using the Random Forest model</div>
           </div>
@@ -1589,15 +2278,15 @@ function RiskPage() {
               {liveData && (
                 <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
                   <div style={{ flex: 1, padding: "10px 12px", background: "rgba(6,182,212,0.08)", borderRadius: 10, border: "1px solid rgba(6,182,212,0.2)", textAlign: "left" }}>
-                    <div style={{ color: "#06b6d4", fontSize: 10, fontWeight: 700, marginBottom: 4 }}>🌤️ LIVE WEATHER</div>
-                    <div style={{ fontWeight: 700, fontSize: 13 }}>{liveData.weather?.weather ?? "—"}</div>
+                    <div style={{ color: "#06b6d4", fontSize: 10, fontWeight: 700, marginBottom: 4 }}>??️ LIVE WEATHER</div>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{liveData.weather?.weather ?? "??"}</div>
                     <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
                       {liveData.weather?.temperature}°C · {liveData.weather?.humidity}% RH
                     </div>
                   </div>
                   <div style={{ flex: 1, padding: "10px 12px", background: "rgba(245,158,11,0.08)", borderRadius: 10, border: "1px solid rgba(245,158,11,0.2)", textAlign: "left" }}>
-                    <div style={{ color: "#f59e0b", fontSize: 10, fontWeight: 700, marginBottom: 4 }}>🚦 LIVE TRAFFIC</div>
-                    <div style={{ fontWeight: 700, fontSize: 13 }}>{liveData.traffic?.traffic_density ?? "—"}</div>
+                    <div style={{ color: "#f59e0b", fontSize: 10, fontWeight: 700, marginBottom: 4 }}>?? LIVE TRAFFIC</div>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{liveData.traffic?.traffic_density ?? "??"}</div>
                     <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
                       {liveData.traffic?.current_speed} km/h · {Math.round((liveData.traffic?.congestion_ratio ?? 0) * 100)}% congestion
                     </div>
@@ -1610,9 +2299,9 @@ function RiskPage() {
                 background: result.level === "High" ? "rgba(239,68,68,0.1)" : result.level === "Medium" ? "rgba(245,158,11,0.1)" : "rgba(16,185,129,0.1)",
                 border: `1px solid ${riskColor}30`, fontSize: 13, color: "var(--text)"
               }}>
-                {result.level === "High" ? "⚠️ Warning: High accident risk zone. Avoid this route or proceed with extreme caution." :
-                  result.level === "Medium" ? "⚡ Caution: Moderate accident risk. Drive carefully and reduce speed." :
-                    "✅ Safe Zone: Low accident risk. Standard driving precautions apply."}
+                {result.level === "High" ? "?️ Warning: High accident risk zone. Avoid this route or proceed with extreme caution." :
+                  result.level === "Medium" ? "? Caution: Moderate accident risk. Drive carefully and reduce speed." :
+                    "?? Safe Zone: Low accident risk. Standard driving precautions apply."}
               </div>
             </div>
 
@@ -1656,7 +2345,7 @@ function RiskPage() {
 
             {/* Historical data */}
             <div className="glass" style={{ padding: 24 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, fontFamily: "Syne, sans-serif" }}>Historical Records — {inputs.location}</h3>
+              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, fontFamily: "Syne, sans-serif" }}>Historical Records ?? {inputs.location}</h3>
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                   <thead>
@@ -1691,11 +2380,11 @@ function RiskPage() {
       <div className="rightpanel" style={{ paddingTop: 20 }}>
         <h3 style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted)" }}>Safety Recommendations</h3>
         {[
-          { icon: "🚗", title: "Speed", desc: "Reduce to 40 km/h in rain and fog conditions" },
-          { icon: "💡", title: "Visibility", desc: "Turn on headlights in fog or at night" },
-          { icon: "📱", title: "Distraction", desc: "Avoid phone use while driving" },
-          { icon: "🔄", title: "Route", desc: "Consider safer alternate routes if risk is high" },
-          { icon: "⛽", title: "Vehicle", desc: "Check brakes and tires before driving in rain" },
+          { icon: "—", title: "Speed", desc: "Reduce to 40 km/h in rain and fog conditions" },
+          { icon: "??", title: "Visibility", desc: "Turn on headlights in fog or at night" },
+          { icon: "??", title: "Distraction", desc: "Avoid phone use while driving" },
+          { icon: "—", title: "Route", desc: "Consider safer alternate routes if risk is high" },
+          { icon: "?", title: "Vehicle", desc: "Check brakes and tires before driving in rain" },
         ].map((r, i) => (
           <div key={i} style={{ padding: "10px 0", borderBottom: "1px solid var(--border)", display: "flex", gap: 12 }}>
             <span style={{ fontSize: 20 }}>{r.icon}</span>
@@ -1711,71 +2400,343 @@ function RiskPage() {
 }
 
 // ============================================================
-// ADMIN DASHBOARD
+// LEADERBOARD PAGE  (Phase 5.3)
 // ============================================================
-function AdminPage() {
-  const [tab, setTab] = useState("overview");
-  const [apiStats, setApiStats] = useState(null);
-  const [apiBlackspots, setApiBlackspots] = useState([]);
-  const [apiDataset, setApiDataset] = useState([]);
-  const [loading, setLoading] = useState(true);
+function LeaderboardPage() {
+  const [board,    setBoard]    = useState([]);
+  const [myScore,  setMyScore]  = useState(null);  // { driving_score, name, recent_events }
+  const [loading,  setLoading]  = useState(true);
+  const [refresh,  setRefresh]  = useState(0);
 
   useEffect(() => {
     setLoading(true);
     Promise.all([
+      apiFetch("/leaderboard?limit=50"),
+      apiFetch("/score/me"),
+    ]).then(([lb, me]) => {
+      if (lb?.leaderboard) setBoard(lb.leaderboard);
+      if (me?.driving_score !== undefined) setMyScore(me);
+      setLoading(false);
+    });
+  }, [refresh]);
+
+  const badgeColor = (badge) => ({
+    Elite: { bg: "rgba(251,191,36,0.2)",  border: "rgba(251,191,36,0.6)",  text: "#fbbf24" },
+    Safe:  { bg: "rgba(16,185,129,0.15)", border: "rgba(16,185,129,0.5)",  text: "#10b981" },
+    Fair:  { bg: "rgba(245,158,11,0.15)", border: "rgba(245,158,11,0.5)",  text: "#f59e0b" },
+    Risky: { bg: "rgba(239,68,68,0.15)",  border: "rgba(239,68,68,0.5)",   text: "#ef4444" },
+  }[badge] || { bg: "var(--surface2)", border: "var(--border)", text: "var(--muted)" });
+
+  const scoreColor = (s) => s >= 80 ? "#10b981" : s >= 60 ? "#f59e0b" : "#ef4444";
+
+  // SVG ring progress for score (0-100)
+  const ScoreRing = ({ score, size = 56 }) => {
+    const r = (size / 2) - 5;
+    const circ = 2 * Math.PI * r;
+    const arc  = (score / 100) * circ;
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(99,170,255,0.1)" strokeWidth="5" />
+        <circle cx={size/2} cy={size/2} r={r} fill="none"
+          stroke={scoreColor(score)} strokeWidth="5" strokeLinecap="round"
+          strokeDasharray={`${arc} ${circ}`}
+          transform={`rotate(-90 ${size/2} ${size/2})`}
+          style={{ transition: "stroke-dasharray 1s ease" }}
+        />
+        <text x={size/2} y={size/2 + 5} textAnchor="middle"
+          fill={scoreColor(score)}
+          style={{ fontSize: size * 0.28, fontFamily: "Syne, sans-serif", fontWeight: 800 }}>
+          {score}
+        </text>
+      </svg>
+    );
+  };
+
+  const medalEmoji = (rank) => rank === 1 ? "??" : rank === 2 ? "??" : rank === 3 ? "??" : `#${rank}`;
+
+  return (
+    <div style={{ paddingTop: 60, minHeight: "100vh", background: "var(--bg)" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 20px" }}>
+
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
+          <div>
+            <h1 style={{ fontSize: 28, marginBottom: 4 }}>🏆 Safe Driving Leaderboard</h1>
+            <p style={{ color: "var(--muted)", fontSize: 13 }}>Drivers ranked by cumulative safe driving score. Stay safe to climb the ranks.</p>
+          </div>
+          <button className="btn-ghost" onClick={() => setRefresh(r => r + 1)} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            ??? Refresh
+          </button>
+        </div>
+
+        {/* My Score card */}
+        {myScore && (
+          <div className="stat-card" style={{ marginBottom: 28, padding: "20px 24px", background: "linear-gradient(135deg, rgba(59,130,246,0.12), rgba(6,182,212,0.08))" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              <ScoreRing score={myScore.driving_score} size={72} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Your Score</div>
+                <div style={{ fontSize: 22, fontFamily: "Syne, sans-serif", fontWeight: 800 }}>{myScore.name}</div>
+                <div style={{ display: "flex", gap: 12, marginTop: 6 }}>
+                  {["Elite","Safe","Fair","Risky"].map(b => {
+                    const bc = badgeColor(b);
+                    return (
+                      <span key={b} style={{
+                        padding: "2px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+                        background: bc.bg, border: `1px solid ${bc.border}`, color: bc.text,
+                        opacity: (
+                          myScore.driving_score >= 95 && b === "Elite" ||
+                          myScore.driving_score >= 80 && myScore.driving_score < 95 && b === "Safe" ||
+                          myScore.driving_score >= 60 && myScore.driving_score < 80 && b === "Fair" ||
+                          myScore.driving_score < 60 && b === "Risky"
+                        ) ? 1 : 0.25,
+                      }}>{b}</span>
+                    );
+                  })}
+                </div>
+              </div>
+              {/* Recent events mini-log */}
+              {myScore.recent_events?.length > 0 && (
+                <div style={{ minWidth: 200 }}>
+                  <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>Recent Penalties</div>
+                  {myScore.recent_events.slice(0, 4).map((ev, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, padding: "4px 0", borderBottom: "1px solid var(--border)" }}>
+                      <span style={{ color: "var(--muted)", maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.zone || ev.reason}</span>
+                      <span style={{ color: "#ef4444", fontWeight: 700 }}>-{ev.deduction} pts</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Leaderboard table */}
+        {loading ? (
+          <div style={{ textAlign: "center", padding: 60, color: "var(--muted)" }}>
+            <div style={{ width: 32, height: 32, border: "3px solid var(--border)", borderTopColor: "var(--accent)", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
+            Loading leaderboard...
+          </div>
+        ) : board.length === 0 ? (
+          <div style={{ textAlign: "center", padding: 60, color: "var(--muted)" }}>
+            No users yet. Register and start driving!
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {board.map((entry, i) => {
+              const bc  = badgeColor(entry.badge);
+              const isMe = myScore?.name === entry.name;
+              return (
+                <div key={i} className="slide-in" style={{
+                  display: "flex", alignItems: "center", gap: 16,
+                  padding: "14px 20px", borderRadius: 14,
+                  background: isMe ? "rgba(59,130,246,0.1)" : "var(--surface)",
+                  border: `1px solid ${isMe ? "rgba(59,130,246,0.5)" : "var(--border)"}`,
+                  animation: `slideIn 0.3s ease ${i * 0.04}s both`,
+                  transition: "box-shadow 0.2s",
+                  boxShadow: isMe ? "0 0 0 2px rgba(59,130,246,0.3)" : "none",
+                }}>
+                  {/* Rank medal */}
+                  <div style={{
+                    width: 36, textAlign: "center",
+                    fontFamily: "Syne, sans-serif", fontWeight: 800,
+                    fontSize: entry.rank <= 3 ? 22 : 15,
+                    color: entry.rank <= 3 ? undefined : "var(--muted)",
+                  }}>{medalEmoji(entry.rank)}</div>
+
+                  {/* Avatar */}
+                  <div style={{
+                    width: 38, height: 38, borderRadius: "50%",
+                    background: `linear-gradient(135deg, ${scoreColor(entry.driving_score)}, #06b6d4)`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 15, color: "white",
+                    flexShrink: 0,
+                  }}>{entry.name[0].toUpperCase()}</div>
+
+                  {/* Name + badge */}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>
+                      {entry.name}
+                      {isMe && <span style={{ marginLeft: 8, fontSize: 10, color: "var(--accent)", fontFamily: "DM Sans" }}>(you)</span>}
+                    </div>
+                    <span style={{
+                      fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 700,
+                      background: bc.bg, border: `1px solid ${bc.border}`, color: bc.text,
+                    }}>{entry.badge}</span>
+                  </div>
+
+                  {/* Score ring */}
+                  <ScoreRing score={entry.driving_score} size={52} />
+
+                  {/* Score bar */}
+                  <div style={{ width: 100 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--muted)", marginBottom: 4 }}>
+                      <span>Score</span><span style={{ color: scoreColor(entry.driving_score), fontWeight: 700 }}>{entry.driving_score}/100</span>
+                    </div>
+                    <div className="progress-track">
+                      <div className="progress-fill" style={{
+                        width: `${entry.driving_score}%`,
+                        background: scoreColor(entry.driving_score),
+                        transition: "width 1s ease",
+                      }} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Score legend */}
+        <div style={{ marginTop: 28, display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
+          {[
+            { badge: "Elite", range: "95-100", tip: "Outstanding safe driver" },
+            { badge: "Safe",  range: "80-94",  tip: "Good driving habits" },
+            { badge: "Fair",  range: "60-79",  tip: "Needs improvement" },
+            { badge: "Risky", range: "0-59",   tip: "High-risk behaviour" },
+          ].map(({ badge, range, tip }) => {
+            const bc = badgeColor(badge);
+            return (
+              <div key={badge} style={{
+                padding: "8px 14px", borderRadius: 10,
+                background: bc.bg, border: `1px solid ${bc.border}`,
+                textAlign: "center", fontSize: 11,
+              }}>
+                <div style={{ fontWeight: 700, color: bc.text, marginBottom: 2 }}>{badge} · {range}</div>
+                <div style={{ color: "var(--muted)" }}>{tip}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// PHASE 6.1 ?? ADMIN ANALYTICS DASHBOARD (Recharts + Role-Gated)
+// ============================================================
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell, RadialBarChart, RadialBar,
+} from "recharts";
+
+//  Role guard wrapper 
+function AdminPage() {
+  // Read user from localStorage (same pattern as App root)
+  const user = (() => {
+    try { return JSON.parse(localStorage.getItem("user") || "null"); }
+    catch { return null; }
+  })();
+
+  if (!user || user.role !== "admin") {
+    return (
+      <div style={{ minHeight: "100vh", paddingTop: 120, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+        <div style={{ fontSize: 64 }}>🔒</div>
+        <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 800 }}>Admin Access Required</h2>
+        <p style={{ color: "var(--muted)", fontSize: 14, textAlign: "center", maxWidth: 360 }}>
+          This page is restricted to users with the <strong>Admin</strong> role.<br />
+          Contact your system administrator to request access.
+        </p>
+        <div style={{ fontSize: 12, fontFamily: "monospace", background: "var(--surface2)", padding: "6px 14px", borderRadius: 8, color: "#ef4444" }}>
+          403 ?? Forbidden: role="{user?.role || "guest"}"
+        </div>
+      </div>
+    );
+  }
+
+  return <AdminDashboard />;
+}
+
+//  Actual dashboard (only rendered for role=admin) ??????????????????????
+function AdminDashboard() {
+  const [tab,          setTab]          = useState("charts");
+  const [analytics,    setAnalytics]    = useState(null);   // /api/admin/analytics
+  const [apiStats,     setApiStats]     = useState(null);
+  const [apiBlackspots,setApiBlackspots]= useState([]);
+  const [apiDataset,   setApiDataset]   = useState([]);
+  const [loading,      setLoading]      = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      apiFetch("/admin/analytics"),
       apiFetch("/statistics"),
       apiFetch("/blackspots"),
       apiFetch("/dataset?limit=20"),
-    ]).then(([stats, spots, ds]) => {
-      if (stats) setApiStats(stats);
-      if (spots) setApiBlackspots(spots);
-      if (ds?.data) setApiDataset(ds.data);
+    ]).then(([an, stats, spots, ds]) => {
+      if (an)        setAnalytics(an);
+      if (stats)     setApiStats(stats);
+      if (spots)     setApiBlackspots(spots);
+      if (ds?.data)  setApiDataset(ds.data);
       setLoading(false);
     });
   }, []);
 
   // Fall back to local data if API is offline
   const stats = apiStats ? {
-    total: apiStats.total,
-    high: apiStats.high,
-    med: apiStats.medium,
-    low: apiStats.low,
-    avgAcc: apiStats.avg_accidents?.toFixed(1) ?? "—",
+    total: apiStats.total, high: apiStats.high, med: apiStats.medium,
+    low: apiStats.low, avgAcc: apiStats.avg_accidents?.toFixed(1) ?? "??",
   } : {
     total: DATASET.length,
     high: DATASET.filter(d => d.risk_level === "High").length,
-    med: DATASET.filter(d => d.risk_level === "Medium").length,
-    low: DATASET.filter(d => d.risk_level === "Low").length,
+    med:  DATASET.filter(d => d.risk_level === "Medium").length,
+    low:  DATASET.filter(d => d.risk_level === "Low").length,
     avgAcc: (DATASET.reduce((s, d) => s + d.accident_count, 0) / DATASET.length).toFixed(1),
   };
 
   const blackspots = apiBlackspots.length > 0 ? apiBlackspots : NAGPUR_LOCATIONS.map(loc => {
     const data = DATASET.filter(d => d.location === loc.name);
-    return {
-      ...loc, total: data.length, high: data.filter(d => d.risk_level === "High").length,
-      avg_accidents: data.length ? (data.reduce((s, d) => s + d.accident_count, 0) / data.length).toFixed(1) : 0,
-      status: "—"
-    };
+    return { ...loc, total: data.length, high: data.filter(d => d.risk_level === "High").length,
+      avg_accidents: data.length ? (data.reduce((s, d) => s + d.accident_count, 0) / data.length).toFixed(1) : 0, status: "??" };
   }).sort((a, b) => b.high - a.high);
 
   const tableData = apiDataset.length > 0 ? apiDataset : DATASET.slice(0, 20);
 
-  const weatherRisk = apiStats?.weather_risk ?? {};
-  const roadRisk = apiStats?.road_risk ?? {};
+  //  Build chart data (use API analytics or fallback from DATASET) ????
+  const accByHour = analytics?.accidents_by_hour ?? (() => {
+    const buckets = Array.from({ length: 24 }, (_, h) => ({ hour: h, High: 0, Medium: 0, Low: 0 }));
+    DATASET.forEach(d => {
+      const h = parseInt(d.time_of_day || 0) % 24;
+      const rl = d.risk_level || "Low";
+      if (buckets[h][rl] !== undefined) buckets[h][rl]++;
+    });
+    return buckets;
+  })();
 
-  // Monthly trend (always simulated — no API endpoint)
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const monthData = months.map((m, i) => ({
-    month: m,
-    high: 20 + Math.floor(Math.sin(i * 0.8) * 10 + Math.random() * 15),
-    med: 30 + Math.floor(Math.cos(i * 0.5) * 10 + Math.random() * 12),
-  }));
+  const hazardsByType = (() => {
+    if (analytics?.hazards_by_type?.length) return analytics.hazards_by_type.map(h => ({ name: h.type, value: h.count }));
+    // Fallback: simulate from DATASET risk levels
+    return [
+      { name: "Pothole",       value: 38 },
+      { name: "Accident",      value: 24 },
+      { name: "Road Closure",  value: 12 },
+      { name: "Waterlogging",  value: 18 },
+      { name: "Other",         value: 8  },
+    ];
+  })();
+
+  const riskByRoad = analytics?.risk_by_road ?? (() => {
+    const m = {};
+    DATASET.forEach(d => {
+      const rt = d.road_type || "Unknown";
+      const rl = d.risk_level || "Low";
+      if (!m[rt]) m[rt] = { road_type: rt, High: 0, Medium: 0, Low: 0 };
+      if (m[rt][rl] !== undefined) m[rt][rl]++;
+    });
+    return Object.values(m);
+  })();
+
+  const weatherData = analytics?.weather_breakdown ?? (() => {
+    const m = {};
+    DATASET.forEach(d => { const w = d.weather || "Unknown"; m[w] = (m[w] || 0) + 1; });
+    return Object.entries(m).map(([weather, count]) => ({ weather, count }));
+  })();
 
   const downloadCSV = async () => {
-    // Try to get full dataset from API, fall back to local
     const res = await apiFetch("/dataset?limit=1000");
     const rows = res?.data ?? DATASET;
-    const headers = ["id", "location", "latitude", "longitude", "time_of_day", "weather", "road_type", "traffic_density", "accident_count", "risk_level"];
+    const headers = ["id","location","latitude","longitude","time_of_day","weather","road_type","traffic_density","accident_count","risk_level"];
     const csv = [headers.join(","), ...rows.map(d => headers.map(h => d[h]).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -1784,29 +2745,216 @@ function AdminPage() {
     URL.revokeObjectURL(url);
   };
 
-  const maxBar = Math.max(...monthData.map(m => m.high + m.med));
+  //  Step 6.2: PDF Report generation (jsPDF + html2canvas) ????????????????
+  const chartsRef   = useRef(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const downloadPDF = async () => {
+    setPdfLoading(true);
+    try {
+      const [{ default: jsPDF }, { default: html2canvas }] =
+        await Promise.all([import("jspdf"), import("html2canvas")]);
+
+      const doc   = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const W     = doc.internal.pageSize.getWidth();   // 210 mm
+      const H     = doc.internal.pageSize.getHeight();  // 297 mm
+      const now   = new Date();
+      const month = now.toLocaleString("default", { month: "long", year: "numeric" });
+
+      //  Page 1: Cover 
+      // Dark hero gradient (drawn as a filled rect)
+      doc.setFillColor(10, 14, 26);          // #0a0e1a
+      doc.rect(0, 0, W, H, "F");
+
+      // Accent stripe
+      doc.setFillColor(59, 130, 246);        // #3b82f6
+      doc.rect(0, 0, 6, H, "F");
+
+      // Title
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(26);
+      doc.text("SafeRoute AI", 20, 52);
+
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(148, 163, 184);       // slate-400
+      doc.text("Monthly Road Safety Intelligence Report", 20, 62);
+
+      // Divider
+      doc.setDrawColor(59, 130, 246);
+      doc.setLineWidth(0.5);
+      doc.line(20, 70, W - 20, 70);
+
+      // Report metadata
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text(`Reporting Period:  ${month}`, 20, 82);
+      doc.text(`Generated:         ${now.toLocaleString()}`, 20, 90);
+      doc.text(`Location:          Nagpur, Maharashtra, India`, 20, 98);
+      doc.text(`Classification:    Confidential ? City Planners Only`, 20, 106);
+
+      // KPI summary table
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(99, 170, 255);
+      doc.text("KEY PERFORMANCE INDICATORS", 20, 124);
+
+      const kpis = [
+        ["Total Accident Records",   String(stats.total)],
+        ["High Risk Events",         String(stats.high)],
+        ["Medium Risk Events",       String(stats.med)],
+        ["Safe Events",              String(stats.low)],
+        ["Avg Accidents / Location", String(stats.avgAcc)],
+        ["Registered Users",         String(analytics?.total_users  ?? "?")],
+        ["Hazards Reported",         String(analytics?.total_hazards ?? "?")],
+      ];
+      const ROW_H = 10, COL1 = 20, COL2 = 140, TBL_Y = 132;
+      kpis.forEach(([label, val], i) => {
+        const y   = TBL_Y + i * ROW_H;
+        const alt = i % 2 === 0;
+        doc.setFillColor(alt ? 22 : 30, alt ? 28 : 36, alt ? 48 : 58);
+        doc.rect(COL1, y, W - 40, ROW_H, "F");
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(200, 214, 230);
+        doc.text(label, COL1 + 4, y + 7);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(255, 255, 255);
+        doc.text(val, COL2, y + 7);
+      });
+
+      // Footer on cover
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(71, 85, 105);
+      doc.text("SafeRoute AI ? Powered by Random Forest + A* Risk Routing", 20, H - 12);
+      doc.text(`Page 1`, W - 28, H - 12);
+
+      //  Page 2+: Charts screenshot ????????????????????????
+      if (chartsRef.current) {
+        const canvas = await html2canvas(chartsRef.current, {
+          backgroundColor: "#0a0e1a",
+          scale: 1.6,            // high-DPI
+          useCORS: true,
+          logging: false,
+        });
+
+        const imgData    = canvas.toDataURL("image/jpeg", 0.88);
+        const imgW       = W - 20;  // 190 mm
+        const imgH       = (canvas.height / canvas.width) * imgW;
+        const pageContentH = H - 36; // leave 18 mm top + 18 mm bottom margins
+        const pagesNeeded  = Math.ceil(imgH / pageContentH);
+
+        for (let p = 0; p < pagesNeeded; p++) {
+          doc.addPage();
+          doc.setFillColor(10, 14, 26);
+          doc.rect(0, 0, W, H, "F");
+          doc.setFillColor(59, 130, 246);
+          doc.rect(0, 0, 6, H, "F");
+
+          // Section header
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(11);
+          doc.setTextColor(99, 170, 255);
+          doc.text("ANALYTICS CHARTS", 20, 14);
+          doc.setDrawColor(59, 130, 246);
+          doc.line(20, 17, W - 20, 17);
+
+          // Clip and draw the portion of the chart image for this page
+          const srcY     = p * pageContentH;
+          const sliceH   = Math.min(pageContentH, imgH - srcY);
+
+          // Add image with clipping via y-offset trick
+          doc.addImage(
+            imgData, "JPEG",
+            10, 20,          // x, y on PDF page
+            imgW, imgH,      // full image dimensions
+            undefined,       // alias
+            "FAST",
+            0,               // rotation
+          );
+
+          // White overlay to hide lower portion on intermediate pages
+          if (p < pagesNeeded - 1) {
+            doc.setFillColor(10, 14, 26);
+            doc.rect(0, 20 + sliceH, W, H, "F");
+          }
+
+          // Footer
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8);
+          doc.setTextColor(71, 85, 105);
+          doc.text(`SafeRoute AI ? ${month}`, 20, H - 6);
+          doc.text(`Page ${p + 2}`, W - 28, H - 6);
+        }
+      }
+
+      doc.save(`SafeRoute_Report_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}.pdf`);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      alert("PDF generation failed ? see console for details.");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+  //  end PDF report ???????????????????????????????????????????????????????
+
+  // Custom Recharts tooltip style
+  const tooltipStyle = { background: "rgba(10,14,26,0.95)", border: "1px solid rgba(99,170,255,0.2)", borderRadius: 10, fontSize: 12 };
+  const PIE_COLORS = ["#ef4444","#f59e0b","#10b981","#3b82f6","#8b5cf6","#ec4899","#06b6d4"];
+  const CHART_FONT = { fontSize: 11, fill: "#64748b", fontFamily: "DM Sans" };
+
+  // Custom pie label
+  const renderPieLabel = ({ name, percent }) =>
+    percent > 0.05 ? `${name} ${(percent * 100).toFixed(0)}%` : "";
 
   return (
-    <div style={{ minHeight: "100vh", paddingTop: 80, padding: "80px 24px 24px" }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+    <div style={{ minHeight: "100vh", paddingTop: 80, padding: "80px 24px 40px" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
           <div>
-            <h2 style={{ fontSize: 24, fontWeight: 800 }}>Admin Dashboard</h2>
-            <div style={{ color: "var(--muted)", fontSize: 13, marginTop: 4 }}>Nagpur Road Safety Intelligence Platform</div>
+            <h2 style={{ fontSize: 24, fontWeight: 800 }}>🏛 Admin Analytics Dashboard</h2>
+            <div style={{ color: "var(--muted)", fontSize: 13, marginTop: 4 }}>
+              Nagpur Road Safety Intelligence Platform · <span style={{ color: "#10b981" }}>role: admin</span>
+            </div>
           </div>
-          <button className="btn-primary" style={{ display: "flex", alignItems: "center", gap: 8 }} onClick={downloadCSV}>
-            <Icon.Download /> Download Dataset CSV
-          </button>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button className="btn-ghost" style={{ display: "flex", alignItems: "center", gap: 8 }} onClick={downloadCSV}>
+              <Icon.Download /> Export CSV
+            </button>
+            <button
+              className="btn-primary"
+              style={{
+                display: "flex", alignItems: "center", gap: 8,
+                background: pdfLoading ? "rgba(239,68,68,0.7)" : "linear-gradient(135deg,#ef4444,#f59e0b)",
+                boxShadow: "0 4px 16px rgba(239,68,68,0.3)",
+                opacity: pdfLoading ? 0.8 : 1,
+              }}
+              onClick={downloadPDF}
+              disabled={pdfLoading}
+            >
+              {pdfLoading
+                ? <><span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} /> Generating PDF?</>
+                : <>? Download PDF Report</>
+              }
+            </button>
+          </div>
         </div>
 
-        {/* Stats row */}
-        <div className="admin-grid" style={{ marginBottom: 24 }}>
+        {/* KPI cards */}
+        <div className="admin-grid" style={{ marginBottom: 28 }}>
           {[
-            { label: "Total Records", val: stats.total, color: "#3b82f6", icon: "📊" },
-            { label: "High Risk Events", val: stats.high, color: "#ef4444", icon: "🔴" },
-            { label: "Medium Risk", val: stats.med, color: "#f59e0b", icon: "🟡" },
-            { label: "Safe Events", val: stats.low, color: "#10b981", icon: "🟢" },
-            { label: "Avg Accidents/Loc", val: stats.avgAcc, color: "#8b5cf6", icon: "📉" },
+            { label: "Total Records",      val: stats.total,  color: "#3b82f6", icon: "📊" },
+            { label: "High Risk Events",   val: stats.high,   color: "#ef4444", icon: "??" },
+            { label: "Medium Risk",        val: stats.med,    color: "#f59e0b", icon: "??" },
+            { label: "Safe Events",        val: stats.low,    color: "#10b981", icon: "??" },
+            { label: "Avg Accidents/Loc",  val: stats.avgAcc, color: "#8b5cf6", icon: "📉" },
+            { label: "Registered Users",   val: analytics?.total_users   ?? "??", color: "#06b6d4", icon: "??" },
+            { label: "Hazards Reported",   val: analytics?.total_hazards ?? "??", color: "#ec4899", icon: "?️" },
           ].map(s => (
             <div key={s.label} className="stat-card">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -1821,194 +2969,201 @@ function AdminPage() {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 20, background: "var(--surface2)", borderRadius: 10, padding: 4, width: "fit-content" }}>
-          {[["overview", "Overview"], ["blackspots", "Blackspots"], ["dataset", "Dataset"]].map(([id, label]) => (
+        <div style={{ display: "flex", gap: 8, marginBottom: 24, background: "var(--surface2)", borderRadius: 10, padding: 4, width: "fit-content" }}>
+          {[["charts","??? Charts"],["blackspots","🗺 Blackspots"],["dataset","??? Dataset"]].map(([id, label]) => (
             <button key={id} className={`tab ${tab === id ? "active" : ""}`} onClick={() => setTab(id)}>{label}</button>
           ))}
         </div>
 
-        {tab === "overview" && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }} className="fade-in">
-            {/* Monthly chart */}
-            <div className="glass" style={{ padding: 24 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 20, fontFamily: "Syne, sans-serif" }}>Monthly Accident Trends</h3>
-              <div style={{ display: "flex", gap: 8, alignItems: "flex-end", height: 120 }}>
-                {monthData.map((m, i) => {
-                  const totalH = (m.high / maxBar) * 100;
-                  const totalM = (m.med / maxBar) * 100;
-                  return (
-                    <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 1 }}>
-                        <div style={{ height: `${totalH}px`, background: "#ef4444", borderRadius: 3, transition: "height 0.5s ease", minHeight: 2 }} />
-                        <div style={{ height: `${totalM * 0.5}px`, background: "#f59e0b", borderRadius: 3, transition: "height 0.5s ease", minHeight: 2 }} />
-                      </div>
-                      <div style={{ fontSize: 9, color: "var(--muted)", marginTop: 4 }}>{m.month}</div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div style={{ display: "flex", gap: 16, marginTop: 12, fontSize: 11 }}>
-                <span style={{ color: "#ef4444" }}>■ High</span>
-                <span style={{ color: "#f59e0b" }}>■ Medium</span>
-              </div>
+        {/* ?? CHARTS TAB ?????????????????????????????????????????????? */}
+        {tab === "charts" && (
+          <div ref={chartsRef} className="fade-in" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+
+            {/* 1. Accidents by Hour ?? Stacked Bar */}
+            <div className="glass" style={{ padding: 24, gridColumn: "1 / -1" }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 6, fontFamily: "Syne, sans-serif" }}>
+                Accidents by Time of Day
+              </h3>
+              <p style={{ fontSize: 11, color: "var(--muted)", marginBottom: 20 }}>
+                Stacked by risk level ?? identifies peak accident hours for city planners
+              </p>
+              {loading ? (
+                <div style={{ height: 260, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" }}>Loading?</div>
+              ) : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={accByHour} margin={{ top: 4, right: 16, left: 0, bottom: 4 }} barSize={14}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(99,170,255,0.08)" />
+                    <XAxis dataKey="hour" tickFormatter={h => `${h}:00`} tick={CHART_FONT} interval={2} />
+                    <YAxis tick={CHART_FONT} />
+                    <Tooltip contentStyle={tooltipStyle} labelFormatter={h => `${h}:00 ?? ${h + 1}:00`} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="High"   stackId="a" fill="#ef4444" radius={[0,0,0,0]} />
+                    <Bar dataKey="Medium" stackId="a" fill="#f59e0b" radius={[0,0,0,0]} />
+                    <Bar dataKey="Low"    stackId="a" fill="#10b981" radius={[4,4,0,0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
 
-            {/* Weather breakdown */}
+            {/* 2. Hazards by Type ?? Pie Chart */}
             <div className="glass" style={{ padding: 24 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 20, fontFamily: "Syne, sans-serif" }}>Risk by Weather Condition</h3>
-              {["Rain", "Fog", "Clear", "Cloudy", "Haze"].map(w => {
-                const pct = weatherRisk[w] ?? (() => {
-                  const d = DATASET.filter(x => x.weather === w);
-                  const h = d.filter(x => x.risk_level === "High").length;
-                  return d.length ? Math.round(h / d.length * 100) : 0;
-                })();
-                const color = pct > 60 ? "#ef4444" : pct > 40 ? "#f59e0b" : "#10b981";
-                return (
-                  <div key={w} style={{ marginBottom: 12 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 }}>
-                      <span>{w}</span>
-                      <span style={{ color, fontWeight: 700 }}>{pct}% high risk</span>
-                    </div>
-                    <div className="progress-track">
-                      <div className="progress-fill" style={{ width: `${pct}%`, background: color }} />
-                    </div>
-                  </div>
-                );
-              })}
+              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 6, fontFamily: "Syne, sans-serif" }}>
+                Hazards Reported by Type
+              </h3>
+              <p style={{ fontSize: 11, color: "var(--muted)", marginBottom: 16 }}>
+                Breakdown of citizen-reported hazard categories
+              </p>
+              {loading ? (
+                <div style={{ height: 260, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" }}>Loading?</div>
+              ) : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie
+                      data={hazardsByType} cx="50%" cy="50%"
+                      outerRadius={100} innerRadius={50}
+                      dataKey="value" nameKey="name"
+                      label={renderPieLabel} labelLine={false}
+                      paddingAngle={3}
+                    >
+                      {hazardsByType.map((_, i) => (
+                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={tooltipStyle} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
             </div>
 
-            {/* Road type */}
+            {/* 3. Risk Level by Road Type ?? Grouped Bar */}
             <div className="glass" style={{ padding: 24 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 20, fontFamily: "Syne, sans-serif" }}>Risk by Road Type</h3>
-              {["Junction", "Highway", "City Road", "Urban", "Flyover", "Ring Road"].map(r => {
-                const pct = roadRisk[r] ?? (() => {
-                  const d = DATASET.filter(x => x.road_type === r);
-                  const h = d.filter(x => x.risk_level === "High").length;
-                  return d.length ? Math.round(h / d.length * 100) : 0;
-                })();
-                const color = pct > 55 ? "#ef4444" : pct > 35 ? "#f59e0b" : "#10b981";
-                return (
-                  <div key={r} style={{ marginBottom: 12 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 }}>
-                      <span>{r}</span>
-                      <span style={{ color, fontWeight: 700 }}>{pct}%</span>
-                    </div>
-                    <div className="progress-track">
-                      <div className="progress-fill" style={{ width: `${pct}%`, background: color }} />
-                    </div>
-                  </div>
-                );
-              })}
+              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 6, fontFamily: "Syne, sans-serif" }}>
+                Risk Level by Road Type
+              </h3>
+              <p style={{ fontSize: 11, color: "var(--muted)", marginBottom: 16 }}>
+                Which road categories carry the most high-risk incidents?
+              </p>
+              {loading ? (
+                <div style={{ height: 240, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" }}>Loading?</div>
+              ) : (
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart data={riskByRoad} margin={{ top: 4, right: 8, left: 0, bottom: 20 }} barSize={18}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(99,170,255,0.08)" />
+                    <XAxis dataKey="road_type" tick={{ ...CHART_FONT, angle: -20, textAnchor: "end" }} />
+                    <YAxis tick={CHART_FONT} />
+                    <Tooltip contentStyle={tooltipStyle} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="High"   fill="#ef4444" radius={[4,4,0,0]} />
+                    <Bar dataKey="Medium" fill="#f59e0b" radius={[4,4,0,0]} />
+                    <Bar dataKey="Low"    fill="#10b981" radius={[4,4,0,0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
 
-            {/* Model accuracy */}
+            {/* 4. Weather Breakdown ?? Horizontal Bar */}
             <div className="glass" style={{ padding: 24 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 20, fontFamily: "Syne, sans-serif" }}>ML Model Performance</h3>
-              {[
-                { label: "Overall Accuracy", val: apiStats?.model_accuracy ?? 91.4, color: "#10b981" },
-                { label: "Precision (High)", val: 88.2, color: "#ef4444" },
-                { label: "Recall (High)", val: 85.7, color: "#f59e0b" },
-                { label: "F1 Score", val: 86.9, color: "#3b82f6" },
-                { label: "AUC-ROC", val: 93.1, color: "#8b5cf6" },
-              ].map(m => (
-                <div key={m.label} style={{ marginBottom: 12 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 }}>
-                    <span>{m.label}</span>
-                    <span style={{ color: m.color, fontWeight: 700 }}>{m.val}%</span>
-                  </div>
-                  <div className="progress-track">
-                    <div className="progress-fill" style={{ width: `${m.val}%`, background: m.color }} />
-                  </div>
-                </div>
-              ))}
+              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 6, fontFamily: "Syne, sans-serif" }}>
+                Accidents by Weather Condition
+              </h3>
+              <p style={{ fontSize: 11, color: "var(--muted)", marginBottom: 16 }}>
+                Identifies which weather conditions correlate with most accidents
+              </p>
+              {loading ? (
+                <div style={{ height: 240, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" }}>Loading?</div>
+              ) : (
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart data={weatherData} layout="vertical" margin={{ top: 4, right: 16, left: 60, bottom: 4 }} barSize={18}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(99,170,255,0.08)" />
+                    <XAxis type="number" tick={CHART_FONT} />
+                    <YAxis type="category" dataKey="weather" tick={CHART_FONT} width={56} />
+                    <Tooltip contentStyle={tooltipStyle} />
+                    <Bar dataKey="count" name="Incidents" radius={[0,4,4,0]}
+                      fill="url(#weatherGrad)"
+                    />
+                    <defs>
+                      <linearGradient id="weatherGrad" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#3b82f6" />
+                        <stop offset="100%" stopColor="#06b6d4" />
+                      </linearGradient>
+                    </defs>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
+
           </div>
         )}
 
+        {/* ?? BLACKSPOTS TAB ?????????????????????????????????????????? */}
         {tab === "blackspots" && (
           <div className="fade-in">
-            <div className="glass" style={{ padding: 24 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 20, fontFamily: "Syne, sans-serif" }}>Top Accident Blackspots — Nagpur</h3>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ borderBottom: "2px solid var(--border)" }}>
-                      {["Rank", "Location", "Coordinates", "Total Records", "High Risk", "Avg Accidents", "Status"].map(h => (
-                        <th key={h} style={{ padding: "10px 12px", textAlign: "left", color: "var(--muted)", fontWeight: 700, fontFamily: "Syne, sans-serif", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {blackspots.map((b, i) => (
-                      <tr key={b.name || b.location} style={{ borderBottom: "1px solid var(--border)" }}>
-                        <td style={{ padding: "10px 12px", color: "var(--muted)", fontWeight: 700 }}>#{i + 1}</td>
-                        <td style={{ padding: "10px 12px", fontWeight: 600 }}>{b.name || b.location}</td>
-                        <td style={{ padding: "10px 12px", color: "var(--muted)", fontSize: 11 }}>{parseFloat(b.latitude || b.lat).toFixed(4)}, {parseFloat(b.longitude || b.lng).toFixed(4)}</td>
-                        <td style={{ padding: "10px 12px" }}>{b.total}</td>
-                        <td style={{ padding: "10px 12px", color: "#ef4444", fontWeight: 700 }}>{b.high}</td>
-                        <td style={{ padding: "10px 12px" }}>{b.avg_accidents ?? b.avgAcc}</td>
-                        <td style={{ padding: "10px 12px" }}>
-                          <span className={`risk-badge risk-${b.high > 6 ? "High" : b.high > 3 ? "Medium" : "Low"}`}>
-                            {b.status ?? (b.high > 6 ? "Blackspot" : b.high > 3 ? "Watch Zone" : "Safe")}
-                          </span>
-                        </td>
-                      </tr>
+            <div className="glass" style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                    {["Location","Total","High Risk","Avg Accidents"].map(h => (
+                      <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </tr>
+                </thead>
+                <tbody>
+                  {blackspots.slice(0, 20).map((b, i) => (
+                    <tr key={i} style={{ borderBottom: "1px solid var(--border)" }}>
+                      <td style={{ padding: "12px 16px", fontWeight: 600 }}>{b.name}</td>
+                      <td style={{ padding: "12px 16px" }}>{b.total}</td>
+                      <td style={{ padding: "12px 16px" }}>
+                        <span style={{ color: "#ef4444", fontWeight: 700 }}>{b.high}</span>
+                      </td>
+                      <td style={{ padding: "12px 16px" }}>{b.avg_accidents}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
 
+        {/* ?? DATASET TAB ?????????????????????????????????????????????? */}
         {tab === "dataset" && (
           <div className="fade-in">
-            <div className="glass" style={{ padding: 24 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, fontFamily: "Syne, sans-serif" }}>Dataset Preview — 1000 Records</h3>
-                <button className="btn-ghost" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }} onClick={downloadCSV}>
-                  <Icon.Download /> Export CSV
-                </button>
-              </div>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-                  <thead>
-                    <tr style={{ borderBottom: "2px solid var(--border)" }}>
-                      {["ID", "Location", "Lat", "Lng", "Time", "Weather", "Road Type", "Traffic", "Accidents", "Risk"].map(h => (
-                        <th key={h} style={{ padding: "8px 10px", textAlign: "left", color: "var(--muted)", fontWeight: 700, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tableData.map(d => (
-                      <tr key={d.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                        <td style={{ padding: "7px 10px", color: "var(--muted)" }}>{d.id}</td>
-                        <td style={{ padding: "7px 10px", whiteSpace: "nowrap" }}>{d.location}</td>
-                        <td style={{ padding: "7px 10px", color: "var(--muted)" }}>{d.latitude}</td>
-                        <td style={{ padding: "7px 10px", color: "var(--muted)" }}>{d.longitude}</td>
-                        <td style={{ padding: "7px 10px" }}>{d.time_of_day}:00</td>
-                        <td style={{ padding: "7px 10px" }}>{d.weather}</td>
-                        <td style={{ padding: "7px 10px" }}>{d.road_type}</td>
-                        <td style={{ padding: "7px 10px" }}>{d.traffic_density}</td>
-                        <td style={{ padding: "7px 10px", textAlign: "center" }}>{d.accident_count}</td>
-                        <td style={{ padding: "7px 10px" }}>
-                          <span className={`risk-badge risk-${d.risk_level}`}>{d.risk_level}</span>
-                        </td>
-                      </tr>
+            <div className="glass" style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                    {["Location","Hour","Weather","Road","Density","Accidents","Risk"].map(h => (
+                      <th key={h} style={{ padding: "10px 12px", textAlign: "left", fontSize: 10, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
                     ))}
-                  </tbody>
-                </table>
-                <div style={{ textAlign: "center", padding: "12px", color: "var(--muted)", fontSize: 12 }}>
-                  Showing 20 of 1000 records · Download CSV for full dataset
-                </div>
-              </div>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tableData.map((d, i) => (
+                    <tr key={i} style={{ borderBottom: "1px solid var(--border)" }}>
+                      <td style={{ padding: "10px 12px", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.location}</td>
+                      <td style={{ padding: "10px 12px" }}>{d.time_of_day}:00</td>
+                      <td style={{ padding: "10px 12px" }}>{d.weather}</td>
+                      <td style={{ padding: "10px 12px" }}>{d.road_type}</td>
+                      <td style={{ padding: "10px 12px" }}>{d.traffic_density}</td>
+                      <td style={{ padding: "10px 12px", fontWeight: 700 }}>{d.accident_count}</td>
+                      <td style={{ padding: "10px 12px" }}>
+                        <span className={`risk-badge risk-${d.risk_level}`}>{d.risk_level}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
 }
+
+
+
 
 // ============================================================
 // MAIN APP
@@ -2046,10 +3201,11 @@ export default function App() {
           <TopNav user={user} page={page} setPage={setPage}
             darkMode={darkMode} setDarkMode={setDarkMode}
             onLogout={handleLogout} />
-          {page === "dashboard" && <DashboardPage />}
-          {page === "navigation" && <NavigationPage />}
-          {page === "risk" && <RiskPage />}
-          {page === "admin" && <AdminPage />}
+          {page === "dashboard"   && <DashboardPage />}
+          {page === "navigation"  && <NavigationPage />}
+          {page === "risk"        && <RiskPage />}
+          {page === "leaderboard" && <LeaderboardPage />}
+          {page === "admin"       && <AdminPage />}
         </>
       )}
     </div>
