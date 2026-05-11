@@ -100,15 +100,28 @@ with app.app_context():
         pass   # columns may not exist yet on first run — create_all handles it
     print("[OK] Database ready -> instance/saferoute.db")
 
-# CORS FIX
+# CORS: attach headers on EVERY response including errors
 CORS(app, supports_credentials=True)
 
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+    response.headers['Access-Control-Allow-Origin']  = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
     return response
+
+# Global error handler — ensures CORS headers are present on ALL error responses
+# (after_request is NOT called for unhandled exceptions in debug mode)
+@app.errorhandler(Exception)
+def handle_all_errors(e):
+    from flask import make_response
+    import traceback
+    traceback.print_exc()
+    resp = make_response(jsonify({"error": str(e)}), 500)
+    resp.headers['Access-Control-Allow-Origin']  = '*'
+    resp.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
+    return resp
 
 MODEL_LOADED = False
 model = le_weather = le_road = le_density = le_risk = None
@@ -198,8 +211,8 @@ def get_live_weather(lat: float, lng: float) -> dict:
     else:                       # 800 clear sky
         weather_label = "Clear"
 
-    print(f"[WEATHER] lat={lat}, lng={lng} → {weather_label} "
-          f"({ow['weather'][0]['description']}, {ow['main']['temp']}°C)")
+    print(f"[WEATHER] lat={lat}, lng={lng} >> {weather_label} "
+          f"({ow['weather'][0]['description']}, {ow['main']['temp']}C)")
 
     return {
         "weather":     weather_label,
@@ -264,7 +277,7 @@ def get_live_traffic(lat: float, lng: float) -> dict:
 
     congestion = round(1.0 - ratio, 2)   # 0 = free flow, 1 = standstill
 
-    print(f"[TRAFFIC] lat={lat}, lng={lng} → {density_label} "
+    print(f"[TRAFFIC] lat={lat}, lng={lng} >> {density_label} "
           f"(speed {current_speed}/{free_flow} km/h, congestion={congestion})")
 
     return {
@@ -604,36 +617,189 @@ def statistics():
 def live_weather_route():
     """
     GET /api/live-weather?lat=<lat>&lon=<lon>
-    HTTP wrapper around get_live_weather().  Defaults to Nagpur centre.
+    Returns real weather from OpenWeatherMap, or plausible mock data
+    when the API key is missing (no console errors).
     """
     try:
         lat = float(request.args.get("lat", 21.1458))
         lon = float(request.args.get("lon", 79.0882))
+    except ValueError:
+        return jsonify({"error": "Invalid lat/lon"}), 400
+
+    if not OPENWEATHER_API_KEY:
+        # Return realistic Nagpur weather mock so the UI stays functional
+        hour = datetime.now().hour
+        mock_weather = "Clear" if 7 <= hour <= 18 else "Haze"
+        return jsonify({
+            "weather": mock_weather, "temperature": 32.4, "humidity": 58,
+            "description": "mock data (no API key)", "city": "Nagpur", "mock": True
+        })
+    try:
         return jsonify(get_live_weather(lat, lon))
-    except RuntimeError as e:
-        return jsonify({"error": str(e)}), 503
-    except requests.exceptions.HTTPError as e:
-        return jsonify({"error": f"OpenWeatherMap API error: {e}"}), 502
     except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"OpenWeatherMap request failed: {e}"}), 502
+        return jsonify({"weather": "Clear", "temperature": 32.0, "humidity": 55,
+                        "description": "fallback", "city": "Nagpur", "error": str(e)})
 
 
 @app.route("/api/live-traffic")
 def live_traffic_route():
     """
     GET /api/live-traffic?lat=<lat>&lon=<lon>
-    HTTP wrapper around get_live_traffic().  Defaults to Nagpur centre.
+    Returns real traffic from TomTom, or plausible mock data
+    when the API key is missing (no console errors).
     """
     try:
         lat = float(request.args.get("lat", 21.1458))
         lon = float(request.args.get("lon", 79.0882))
+    except ValueError:
+        return jsonify({"error": "Invalid lat/lon"}), 400
+
+    if not TOMTOM_API_KEY:
+        hour = datetime.now().hour
+        density = "High" if (8 <= hour <= 10 or 17 <= hour <= 20) else "Medium" if 10 <= hour <= 17 else "Low"
+        return jsonify({
+            "traffic_density": density, "current_speed": 28.0, "free_flow_speed": 50.0,
+            "congestion_ratio": 0.44, "mock": True
+        })
+    try:
         return jsonify(get_live_traffic(lat, lon))
-    except RuntimeError as e:
-        return jsonify({"error": str(e)}), 503
-    except requests.exceptions.HTTPError as e:
-        return jsonify({"error": f"TomTom API error: {e}"}), 502
     except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"TomTom request failed: {e}"}), 502
+        return jsonify({"traffic_density": "Medium", "current_speed": 30.0,
+                        "free_flow_speed": 50.0, "congestion_ratio": 0.4, "error": str(e)})
+
+
+# ============================================================
+# GEOCODE PROXY — Photon (primary) + Nominatim (fallback)
+# Photon by Komoot: free, no API key, location-biased OSM search.
+# Dramatically better accuracy for Indian local place names.
+# ============================================================
+
+_geocode_cache = {}
+
+# Nagpur centre used for Photon location bias
+_NAG_LAT, _NAG_LON = "21.1458", "79.0882"
+
+
+def _photon_search(query, n=8):
+    """
+    Photon by Komoot (photon.komoot.io) — free, OSM-based, location-biased.
+    Results nearest to Nagpur centre are ranked first automatically.
+    Returns a list in Nominatim-compatible format { display_name, lat, lon }.
+    """
+    try:
+        resp = requests.get(
+            "https://photon.komoot.io/api/",
+            params={"q": query, "limit": n * 2, "lang": "en",
+                    "lat": _NAG_LAT, "lon": _NAG_LON},
+            headers={"Accept-Language": "en;q=0.9"},
+            timeout=7,
+        )
+        resp.raise_for_status()
+        features = resp.json().get("features", [])
+        results = []
+        for f in features:
+            props  = f.get("properties", {})
+            coords = f.get("geometry", {}).get("coordinates", [])
+            if len(coords) < 2:
+                continue
+            lon_r, lat_r = float(coords[0]), float(coords[1])
+            # Keep only results within ~250 km of Nagpur
+            if abs(lat_r - 21.1458) > 2.5 or abs(lon_r - 79.0882) > 2.5:
+                continue
+            name   = props.get("name", "")
+            street = props.get("street", "")
+            city   = props.get("city") or props.get("town") or props.get("village") or ""
+            state  = props.get("state", "")
+            parts  = list(dict.fromkeys(p for p in [name, street, city, state, "India"] if p))
+            results.append({
+                "display_name": ", ".join(parts),
+                "lat": str(lat_r),
+                "lon": str(lon_r),
+            })
+            if len(results) >= n:
+                break
+        print(f"[PHOTON] '{query}' >> {len(results)} result(s)")
+        return results
+    except Exception as e:
+        print(f"[PHOTON] Error: {e}")
+        return []
+
+
+def _nominatim_search(query, n=5):
+    """Nominatim fallback when Photon returns nothing."""
+    try:
+        q_full = f"{query}, Nagpur" if "nagpur" not in query.lower() else query
+        resp = requests.get(
+            "https://nominatim.openstreetmap.org/search",
+            params={"format": "json", "q": q_full, "countrycodes": "in",
+                    "viewbox": "78.4,20.4,79.8,21.9", "bounded": "0",
+                    "limit": n, "addressdetails": "1"},
+            headers={"User-Agent": "SafeRoute-AI/2.0 (github.com/saferoute-nagpur)",
+                     "Accept-Language": "en-US,en;q=0.9"},
+            timeout=6,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        print(f"[NOMINATIM] '{query}' >> {len(data)} result(s)")
+        return data
+    except Exception as e:
+        print(f"[NOMINATIM] Error: {e}")
+        return []
+
+
+@app.route("/api/geocode")
+def geocode_proxy():
+    """
+    GET /api/geocode?q=<text>&limit=<n>            - forward search
+    GET /api/geocode?reverse=1&lat=<x>&lon=<y>     - reverse lookup
+    Returns a JSON array: [{ display_name, lat, lon }, ...]
+    """
+    # Reverse geocode (lat/lon -> name) via Nominatim
+    if request.args.get("reverse", "0") == "1":
+        lat = request.args.get("lat", "")
+        lon = request.args.get("lon", "")
+        if not lat or not lon:
+            return jsonify({})
+        cache_key = f"rev:{lat},{lon}"
+        if cache_key in _geocode_cache:
+            return jsonify(_geocode_cache[cache_key])
+        try:
+            resp = requests.get(
+                "https://nominatim.openstreetmap.org/reverse",
+                params={"format": "json", "lat": lat, "lon": lon, "addressdetails": "1"},
+                headers={"User-Agent": "SafeRoute-AI/2.0", "Accept-Language": "en-US,en;q=0.9"},
+                timeout=6,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            _geocode_cache[cache_key] = data
+            return jsonify(data)
+        except Exception as e:
+            print(f"[GEOCODE-REVERSE] Error: {e}")
+            return jsonify({})
+
+    # Forward search: Photon first (2 attempts), then Nominatim
+    q = request.args.get("q", "").strip()
+    if not q or len(q) < 2:
+        return jsonify([])
+    limit = min(int(request.args.get("limit", 8)), 15)
+    cache_key = f"fwd:{q.lower()}:{limit}"
+    if cache_key in _geocode_cache:
+        return jsonify(_geocode_cache[cache_key])
+
+    # Attempt 1: Photon with user's query as-is
+    results = _photon_search(q, limit)
+
+    # Attempt 2: Photon with "Nagpur" context if first attempt found nothing
+    if not results and "nagpur" not in q.lower():
+        results = _photon_search(f"{q} Nagpur", limit)
+
+    # Attempt 3: Nominatim fallback
+    if not results:
+        results = _nominatim_search(q, limit)
+
+    _geocode_cache[cache_key] = results
+    return jsonify(results)
 
 
 # ============================================================
@@ -821,6 +987,15 @@ def _get_router_graph():
             print(f"[ROUTER][ERROR] Failed to load graph: {e}")
             _router_graph = None
     return _router_graph
+
+import threading
+def _preload_graph_bg():
+    try:
+        _get_router_graph()
+    except Exception as e:
+        print("[ROUTER][ERROR] Background load failed:", e)
+
+threading.Thread(target=_preload_graph_bg, daemon=True).start()
 
 
 @app.route("/api/route", methods=["GET", "POST"])

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { io } from "socket.io-client";
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Polyline, useMap, LayersControl } from 'react-leaflet';
 import L from 'leaflet';
@@ -13,7 +13,7 @@ L.Icon.Default.mergeOptions({
 });
 
 // ============================================================
-// API CONFIG ?? points to your Flask backend
+// API CONFIG — points to your Flask backend
 // ============================================================
 const API = "http://localhost:5000/api";
 
@@ -22,7 +22,7 @@ function getToken() {
   return localStorage.getItem("token");
 }
 
-// Central fetch helper ?? automatically attaches Authorization header when a
+// Central fetch helper — automatically attaches Authorization header when a
 // JWT is present in localStorage, so every future API call is authenticated.
 async function apiFetch(path, options = {}, timeoutMs = 25000) {
   const token = getToken();
@@ -59,26 +59,92 @@ async function apiFetch(path, options = {}, timeoutMs = 25000) {
 // DATASET: 1000 Nagpur Accident Records (sample of 80 shown)
 // ============================================================
 const NAGPUR_LOCATIONS = [
+  // Core junctions & squares
   { name: "Sitabuldi Junction", lat: 21.1458, lng: 79.0882 },
-  { name: "Wardha Road", lat: 21.09, lng: 79.06 },
-  { name: "Hingna T Point", lat: 21.1, lng: 78.98 },
   { name: "Chatrapati Square", lat: 21.1205, lng: 79.0951 },
+  { name: "Hingna T Point", lat: 21.1, lng: 78.98 },
+  { name: "Zero Mile", lat: 21.1462, lng: 79.0876 },
+  { name: "Law College Square", lat: 21.1432, lng: 79.0791 },
+  { name: "Variety Square", lat: 21.1495, lng: 79.0857 },
+  { name: "VCA Ground Square", lat: 21.1317, lng: 79.0514 },
+  { name: "Laxmi Nagar Square", lat: 21.1391, lng: 79.1238 },
+  { name: "Ajni Square", lat: 21.124, lng: 79.098 },
+  { name: "Indora Square", lat: 21.175, lng: 79.106 },
+  { name: "Jafar Nagar Square", lat: 21.151, lng: 79.027 },
+  { name: "Shankar Nagar Square", lat: 21.148, lng: 79.065 },
+  // Roads & highways
+  { name: "Wardha Road", lat: 21.09, lng: 79.06 },
+  { name: "Kamptee Road", lat: 21.185, lng: 79.115 },
+  { name: "Amravati Road", lat: 21.155, lng: 78.98 },
+  { name: "Hingna Road", lat: 21.1, lng: 78.985 },
+  { name: "Katol Road", lat: 21.2, lng: 79.03 },
+  { name: "Umred Road", lat: 21.09, lng: 79.13 },
+  { name: "Yavatmal Road", lat: 21.06, lng: 79.03 },
+  { name: "Inner Ring Road", lat: 21.13, lng: 79.05 },
+  { name: "Outer Ring Road", lat: 21.08, lng: 79.07 },
+  // Localities & areas
   { name: "Ravi Nagar", lat: 21.135, lng: 79.055 },
   { name: "Dharampeth", lat: 21.13, lng: 79.07 },
   { name: "Civil Lines", lat: 21.152, lng: 79.085 },
   { name: "Trimurti Nagar", lat: 21.145, lng: 79.048 },
   { name: "Pratap Nagar", lat: 21.115, lng: 79.052 },
-  { name: "Zero Mile", lat: 21.1462, lng: 79.0876 },
   { name: "Itwari", lat: 21.1578, lng: 79.1012 },
   { name: "Sadar", lat: 21.1503, lng: 79.0813 },
   { name: "Nandanvan", lat: 21.13, lng: 79.12 },
   { name: "Mankapur", lat: 21.12, lng: 79.04 },
-  { name: "Nagpur Railway Station", lat: 21.1459, lng: 79.085 },
   { name: "Ambazari", lat: 21.1264, lng: 78.9893 },
   { name: "Beltarodi", lat: 21.07, lng: 79.03 },
   { name: "Koradi", lat: 21.25, lng: 79.0 },
   { name: "Butibori", lat: 20.97, lng: 79.05 },
   { name: "MIDC Hingna", lat: 21.09, lng: 79.0 },
+  { name: "Dhantoli", lat: 21.131, lng: 79.074 },
+  { name: "Ramdaspeth", lat: 21.137, lng: 79.076 },
+  { name: "Bajaj Nagar", lat: 21.146, lng: 79.044 },
+  { name: "Gokulpeth", lat: 21.143, lng: 79.073 },
+  { name: "Mahal", lat: 21.155, lng: 79.097 },
+  { name: "Gandhibagh", lat: 21.152, lng: 79.093 },
+  { name: "Cotton Market", lat: 21.157, lng: 79.1 },
+  { name: "Sakkardara", lat: 21.137, lng: 79.11 },
+  { name: "Wadi", lat: 21.182, lng: 79.138 },
+  { name: "Nagpur Railway Station", lat: 21.1459, lng: 79.085 },
+  { name: "Ajni Railway Station", lat: 21.119, lng: 79.092 },
+  { name: "Itwari Railway Station", lat: 21.162, lng: 79.099 },
+  { name: "Nagpur Airport", lat: 21.0922, lng: 79.0472 },
+  // Colleges & universities
+  { name: "YCCE College", lat: 21.09, lng: 79.0394 },
+  { name: "VNIT Nagpur", lat: 21.1313, lng: 79.0548 },
+  { name: "Nagpur University", lat: 21.148, lng: 79.076 },
+  { name: "Government Medical College Nagpur", lat: 21.154, lng: 79.09 },
+  { name: "RCOEM Nagpur", lat: 21.109, lng: 79.048 },
+  { name: "Priyadarshini Engineering College", lat: 21.09, lng: 79.055 },
+  { name: "Nagpur College", lat: 21.141, lng: 79.081 },
+  { name: "Hislop College", lat: 21.143, lng: 79.082 },
+  { name: "Lady Amritbai Daga College", lat: 21.144, lng: 79.085 },
+  // Hospitals
+  { name: "AIIMS Nagpur", lat: 21.0745, lng: 79.069 },
+  { name: "Mayo Hospital", lat: 21.155, lng: 79.092 },
+  { name: "Orange City Hospital", lat: 21.143, lng: 79.072 },
+  { name: "Wockhardt Hospital", lat: 21.146, lng: 79.046 },
+  { name: "Alexis Hospital", lat: 21.09, lng: 79.052 },
+  // Malls & landmarks
+  { name: "Empress Mall", lat: 21.139, lng: 79.087 },
+  { name: "Eternity Mall", lat: 21.145, lng: 79.04 },
+  { name: "Poonam Mall", lat: 21.143, lng: 79.085 },
+  { name: "Aakar Mall", lat: 21.115, lng: 79.052 },
+  { name: "Lokmat Square", lat: 21.147, lng: 79.087 },
+  { name: "Futala Lake", lat: 21.138, lng: 79.018 },
+  { name: "Ambazari Lake", lat: 21.127, lng: 78.992 },
+  { name: "Nagpur Zoo", lat: 21.151, lng: 79.087 },
+  { name: "Deekshabhoomi", lat: 21.128, lng: 79.044 },
+  { name: "Ramtek", lat: 21.393, lng: 79.323 },
+  { name: "Khapri", lat: 21.07, lng: 79.05 },
+  { name: "Manish Nagar", lat: 21.11, lng: 79.04 },
+  { name: "Somalwada", lat: 21.12, lng: 79.09 },
+  { name: "Lakadganj", lat: 21.165, lng: 79.097 },
+  { name: "Pardi", lat: 21.17, lng: 79.09 },
+  { name: "Bhandara Road", lat: 21.14, lng: 79.17 },
+  { name: "Katol", lat: 21.27, lng: 78.58 },
+  { name: "Wanadongri", lat: 21.19, lng: 79.03 },
 ];
 
 function generateDataset(n = 1000) {
@@ -515,7 +581,7 @@ const Icon = {
 // MAP COMPONENT (SVG-based interactive map)
 // ============================================================
 // ============================================================
-// SAFE POLYLINE ?? draws the A* route returned by /api/route
+// SAFE POLYLINE — draws the A* route returned by /api/route
 // route_coords is [[lat,lng], ...] straight from the backend
 // ============================================================
 function SafePolyline({ coords, color, riskLevel }) {
@@ -559,13 +625,13 @@ function MapUpdater({ centerTo }) {
 // HAZARD TYPE CONFIG  (colour + emoji for each category)
 // ============================================================
 const HAZARD_CONFIG = {
-  Pothole:       { color: "#f59e0b", emoji: "??️" },
-  Accident:      { color: "#ef4444", emoji: "??" },
-  "Road Closure":{ color: "#8b5cf6", emoji: "??" },
-  Waterlogging:  { color: "#06b6d4", emoji: "??" },
-  Debris:        { color: "#6b7280", emoji: "?" },
-  "Stray Animals":{ color: "#10b981", emoji: "??" },
-  Other:         { color: "#e879f9", emoji: "?️" },
+  Pothole:       { color: "#f59e0b", emoji: "🕳️" },
+  Accident:      { color: "#ef4444", emoji: "🚨" },
+  "Road Closure": { color: "#8b5cf6", emoji: "🚫" },
+  Waterlogging:  { color: "#06b6d4", emoji: "🌊" },
+  Debris:        { color: "#6b7280", emoji: "🪨" },
+  "Stray Animals": { color: "#10b981", emoji: "🐮" },
+  Other:         { color: "#e879f9", emoji: "⚠️" },
 };
 
 function NagpurMap({ pins, heatmap, safeCoords, safeColor, safeRisk, shortCoords, shortColor, vehiclePos, onPinClick, activePin, hazardPins, liveGpsPos }) {
@@ -599,7 +665,7 @@ function NagpurMap({ pins, heatmap, safeCoords, safeColor, safeRisk, shortCoords
               iconAnchor: [12, 12]
             })}
           >
-            <Popup>?? Your Exact Live Location</Popup>
+            <Popup>📍 Your Exact Live Location</Popup>
           </Marker>
         )}
 
@@ -660,7 +726,7 @@ function NagpurMap({ pins, heatmap, safeCoords, safeColor, safeRisk, shortCoords
             position={safeCoords[Math.min(Math.floor((vehiclePos / 100) * safeCoords.length), safeCoords.length - 1)]}
             icon={L.divIcon({
               className: 'custom-car-marker',
-              html: `<div style="font-size: 24px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); display: flex; align-items: center; justify-content: center; transform: scaleX(-1);">???</div>`,
+              html: `<div style="font-size: 24px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); display: flex; align-items: center; justify-content: center; transform: scaleX(-1);">🚗</div>`,
               iconSize: [24, 24],
               iconAnchor: [12, 12]
             })}
@@ -711,7 +777,7 @@ function NagpurMap({ pins, heatmap, safeCoords, safeColor, safeRisk, shortCoords
                     <div style={{ color: "#64748b", marginBottom: 4, fontSize: 12 }}>{h.description}</div>
                   )}
                   <div style={{ display: "flex", gap: 8, fontSize: 11, color: "#64748b" }}>
-                    <span>?? {h.upvotes ?? 0} upvotes</span>
+                    <span>👍 {h.upvotes ?? 0} upvotes</span>
                     <span style={{
                       color: h.status === "Verified" ? "#10b981" : h.status === "Rejected" ? "#ef4444" : "#f59e0b",
                       fontWeight: 700,
@@ -816,12 +882,12 @@ function AuthPage({ onLogin }) {
         });
         const data = await res.json();
         if (!res.ok) { setErr(data.error || "Login failed"); setLoading(false); return; }
-        // Store JWT in localStorage ?? apiFetch will pick it up automatically
+        // Store JWT in localStorage — apiFetch will pick it up automatically
         localStorage.setItem("token", data.access_token);
         onLogin(data.user);
       }
     } catch (e) {
-      setErr("Network error ?? is the backend running?");
+      setErr("Network error — is the backend running?");
     } finally {
       setLoading(false);
     }
@@ -916,12 +982,14 @@ function AuthPage({ onLogin }) {
 // TOP NAV
 // ============================================================
 function TopNav({ user, page, setPage, darkMode, setDarkMode, onLogout }) {
+  // Only show Admin tab to users with the admin role
+  const isAdmin = user?.role === "admin";
   const pages = [
     { id: "dashboard",   label: "Map",         icon: Icon.Map },
     { id: "navigation",  label: "Navigate",    icon: Icon.Nav },
     { id: "risk",        label: "Risk Analysis",icon: Icon.Risk },
     { id: "leaderboard", label: "Leaderboard",  icon: Icon.Trophy },
-    { id: "admin",       label: "Admin",        icon: Icon.Admin },
+    ...(isAdmin ? [{ id: "admin", label: "Admin", icon: Icon.Admin }] : []),
   ];
 
   return (
@@ -1013,7 +1081,7 @@ function ReportHazardModal({ onClose, onSubmitted }) {
       onSubmitted(data.hazard);
       onClose();
     } catch (e) {
-      setErr("Network error ?? is the backend running?");
+      setErr("Network error — is the backend running?");
     } finally {
       setLoading(false);
     }
@@ -1028,8 +1096,8 @@ function ReportHazardModal({ onClose, onSubmitted }) {
       <div className="glass fade-in" style={{ width: "100%", maxWidth: 420, padding: 28, borderRadius: 18 }}>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-          <h3 style={{ fontSize: 17, display: "flex", alignItems: "center", gap: 8 }}>?️ Report a Hazard</h3>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 20 }}>??</button>
+          <h3 style={{ fontSize: 17, display: "flex", alignItems: "center", gap: 8 }}>🚧 Report a Hazard</h3>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 20 }}>✕</button>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -1082,7 +1150,7 @@ function ReportHazardModal({ onClose, onSubmitted }) {
                 background: "var(--surface2)", color: "var(--text)", fontSize: 12, cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 6,
               }}>
-              {locating ? "?? Locating..." : "?? Use My GPS Location"}
+              {locating ? "📍 Locating..." : "📍 Use My GPS Location"}
             </button>
           </div>
 
@@ -1092,7 +1160,7 @@ function ReportHazardModal({ onClose, onSubmitted }) {
             style={{ width: "100%", padding: 12, marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
             {loading
               ? <><span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} /> Submitting...</>
-              : "?? Submit Hazard Report"}
+              : "🚨 Submit Hazard Report"}
           </button>
         </div>
       </div>
@@ -1121,24 +1189,29 @@ function DashboardPage() {
     apiFetch("/statistics").then(d => { if (d) setApiStats(d); });
     apiFetch("/dataset?limit=80").then(d => { if (d?.data) setApiPins(d.data); });
 
-    //  Load existing hazards from REST endpoint ??????????????????????????????
+    //  Load existing hazards from REST endpoint ———————————————
     apiFetch("/hazards").then(d => { if (d?.hazards) setHazardPins(d.hazards); });
 
-    //  Connect to Flask-SocketIO ????????????????????????????????????????????????????????????
-    const socket = io("http://localhost:5000", { transports: ["websocket", "polling"] });
+    //  Connect to Flask-SocketIO — use polling first (always stable),
+    //  Socket.IO will upgrade to WebSocket automatically if supported.
+    const socket = io("http://localhost:5000", {
+      transports: ["polling", "websocket"],
+      reconnectionDelay: 3000,
+      reconnectionAttempts: 5,
+    });
     socketRef.current = socket;
 
-    socket.on("connect", () => console.log("[WS] Connected ?? id:", socket.id));
+    socket.on("connect", () => console.log("[WS] Connected · id:", socket.id));
     socket.on("disconnect", () => console.log("[WS] Disconnected"));
 
-    //  new_hazard: prepend instantly to the map ??????????????????????????????
+    //  new_hazard: prepend instantly to the map ———————————————
     socket.on("new_hazard", (hazard) => {
       setHazardPins(prev => [hazard, ...prev]);
       const cfg = HAZARD_CONFIG[hazard.hazard_type] || HAZARD_CONFIG.Other;
       setLiveToast({ msg: `${cfg.emoji} New ${hazard.hazard_type} reported nearby!`, id: Date.now() });
     });
 
-    //  hazard_updated: patch the existing hazard in state ??????????
+    //  hazard_updated: patch the existing hazard in state —————
     socket.on("hazard_updated", (updated) => {
       setHazardPins(prev => prev.map(h => h.id === updated.id ? updated : h));
     });
@@ -1181,9 +1254,9 @@ function DashboardPage() {
           border: `1px solid ${backendOk === true ? "rgba(16,185,129,0.3)" : backendOk === false ? "rgba(239,68,68,0.3)" : "rgba(245,158,11,0.3)"}`,
           fontSize: 11, display: "flex", alignItems: "center", gap: 6
         }}>
-          <span style={{ color: backendOk === true ? "#10b981" : backendOk === false ? "#ef4444" : "#f59e0b" }}>?</span>
+          <span style={{ color: backendOk === true ? "#10b981" : backendOk === false ? "#ef4444" : "#f59e0b" }}>{backendOk === true ? "✅" : backendOk === false ? "❌" : "⏳"}</span>
           <span style={{ color: "var(--muted)" }}>
-            {backendOk === null ? "Connecting to backend..." : backendOk ? "Flask API connected" : "Backend offline ?? using local data"}
+            {backendOk === null ? "Connecting to backend..." : backendOk ? "Flask API connected" : "Backend offline — using local data"}
           </span>
         </div>
 
@@ -1258,7 +1331,7 @@ function DashboardPage() {
 
         <div style={{ marginTop: 20, padding: 12, background: "rgba(239,68,68,0.08)", borderRadius: 10, border: "1px solid rgba(239,68,68,0.2)" }}>
           <div style={{ fontSize: 11, color: "#ef4444", fontWeight: 700, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ animation: "pulse 1s infinite", display: "inline-block" }}>?</span> Live Alert
+            <span style={{ animation: "pulse 1s infinite", display: "inline-block" }}>🔴</span> Live Alert
           </div>
           <div style={{ fontSize: 12, color: "var(--text)" }}>High accident risk detected near <strong>Sitabuldi Junction</strong></div>
           <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>Rain + Night conditions · 87% risk</div>
@@ -1277,7 +1350,7 @@ function DashboardPage() {
                 transition: "left 0.2s",
               }} />
             </div>
-            <span>?️ Hazard Pins <span style={{ color: "var(--muted)", fontSize: 11 }}>({hazardPins.length})</span></span>
+            <span>⚠️ Hazard Pins <span style={{ color: "var(--muted)", fontSize: 11 }}>({hazardPins.length})</span></span>
           </label>
         </div>
 
@@ -1302,7 +1375,7 @@ function DashboardPage() {
           onMouseEnter={e => { e.currentTarget.style.transform = "translateX(-50%) translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(239,68,68,0.55)"; }}
           onMouseLeave={e => { e.currentTarget.style.transform = "translateX(-50%)"; e.currentTarget.style.boxShadow = "0 4px 24px rgba(239,68,68,0.45)"; }}
         >
-          ?? Report Hazard
+          🚨 Report Hazard
         </button>
 
         {/* ???? Live toast notification ???? */}
@@ -1372,35 +1445,70 @@ function DashboardPage() {
 
 // ============================================================
 // AUTOCOMPLETE COMPONENT
+// Google-style: prefix matches ranked first, instant local results,
+// Nominatim enriches after 400 ms. Exposes firstSuggestion so
+// findRoutes can auto-resolve without requiring a click.
 // ============================================================
-function LocationAutocomplete({ placeholder, value, onChange }) {
+function LocationAutocomplete({ placeholder, value, onChange, onSelect, suggestionsRef }) {
   const [suggestions, setSuggestions] = useState([]);
   const [show, setShow] = useState(false);
   const debounceRef = useRef();
 
+  // Build local preset list (static, computed once)
+  const localAll = NAGPUR_LOCATIONS.map(l => ({ shortName: l.name, label: l.name, lat: l.lat, lng: l.lng }));
+
+  // Rank local results: exact > prefix > substring (Google-style)
+  const rankLocal = (list, q) => {
+    const lq = q.toLowerCase();
+    const exact   = list.filter(l => l.label.toLowerCase() === lq);
+    const prefix  = list.filter(l => l.label.toLowerCase().startsWith(lq) && l.label.toLowerCase() !== lq);
+    const substr  = list.filter(l => l.label.toLowerCase().includes(lq) && !l.label.toLowerCase().startsWith(lq));
+    return [...exact, ...prefix, ...substr];
+  };
+
+  // Keep parent informed of the current top suggestion (used by findRoutes auto-resolve)
+  useEffect(() => {
+    if (suggestionsRef) suggestionsRef.current = suggestions;
+  }, [suggestions, suggestionsRef]);
+
   const handleInput = (e) => {
     const val = e.target.value;
-    onChange(val);
+    onChange(val, null); // clear cached coords on manual edit
     setShow(true);
-
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     if (!val.trim()) {
-      setSuggestions(NAGPUR_LOCATIONS.map(l => l.name));
+      setSuggestions(localAll);
       return;
     }
 
+    // Show ranked local results IMMEDIATELY (no debounce)
+    const instantLocal = rankLocal(localAll, val);
+    setSuggestions(instantLocal.slice(0, 8));
+
+    // Only call backend geocode when query has 3+ characters
+    // (Nominatim rejects/blocks very short queries causing 502 errors)
+    if (val.trim().length < 3) return;
+
+    // Then enrich with backend geocode proxy after 350 ms
     debounceRef.current = setTimeout(async () => {
-      const local = NAGPUR_LOCATIONS.filter(l => l.name.toLowerCase().includes(val.toLowerCase())).map(l => l.name);
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&countrycodes=in&limit=5`);
+        const res = await fetch(`${API}/geocode?q=${encodeURIComponent(val)}&limit=8`);
+        if (!res.ok) return; // silently keep local results on error
         const data = await res.json();
-        const remote = data ? data.map(d => d.display_name) : [];
-        setSuggestions([...new Set([...local, ...remote])]);
-      } catch (err) {
-        setSuggestions(local);
-      }
-    }, 500);
+        const remote = Array.isArray(data)
+          ? data.map(d => ({
+              shortName: d.display_name.split(',')[0].trim(),
+              label: d.display_name,
+              lat: parseFloat(d.lat),
+              lng: parseFloat(d.lon),
+            }))
+          : [];
+        const seen = new Set(instantLocal.map(l => l.shortName.toLowerCase()));
+        const merged = [...instantLocal, ...remote.filter(r => !seen.has(r.shortName.toLowerCase()))];
+        if (merged.length > 0) setSuggestions(merged.slice(0, 10));
+      } catch (_) { /* keep showing instant local results on error */ }
+    }, 350);
   };
 
   return (
@@ -1413,25 +1521,38 @@ function LocationAutocomplete({ placeholder, value, onChange }) {
         onChange={handleInput}
         onFocus={() => {
           setShow(true);
-          if (!value && suggestions.length === 0) setSuggestions(NAGPUR_LOCATIONS.map(l => l.name));
+          if (!value && suggestions.length === 0) setSuggestions(localAll);
         }}
-        onBlur={() => setTimeout(() => setShow(false), 200)}
+        onBlur={() => setTimeout(() => setShow(false), 250)}
       />
       {show && suggestions.length > 0 && (
         <div style={{
           position: "absolute", top: "100%", left: 0, right: 0,
           background: "var(--surface)", border: "1px solid var(--border)",
-          borderRadius: 8, marginTop: 4, zIndex: 100, maxHeight: 200, overflowY: "auto",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.2)", textAlign: "left"
+          borderRadius: 10, marginTop: 4, zIndex: 200, maxHeight: 240, overflowY: "auto",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.3)", textAlign: "left"
         }}>
           {suggestions.map((s, i) => (
             <div
               key={i}
-              style={{ padding: "8px 12px", fontSize: 13, cursor: "pointer", borderBottom: i < suggestions.length - 1 ? "1px solid var(--border)" : "none" }}
-              onMouseDown={() => { onChange(s); setShow(false); }}
+              style={{ padding: "10px 14px", fontSize: 13, cursor: "pointer", borderBottom: i < suggestions.length - 1 ? "1px solid var(--border)" : "none", transition: "background 0.12s" }}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--surface2)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              onMouseDown={e => {
+                e.preventDefault(); // prevent blur from firing before selection
+                onChange(s.shortName, { lat: s.lat, lng: s.lng, name: s.shortName });
+                if (onSelect) onSelect({ lat: s.lat, lng: s.lng, name: s.shortName });
+                setShow(false);
+              }}
             >
-              <div style={{ fontWeight: 600, color: "var(--text)" }}>{s.split(',')[0]}</div>
-              {s.includes(',') && <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{s.substring(s.indexOf(',') + 1).trim()}</div>}
+              <div style={{ fontWeight: 600, color: "var(--text)", display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 11, opacity: 0.5 }}>📍</span>{s.shortName}
+              </div>
+              {s.label !== s.shortName && (
+                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {s.label.substring(s.shortName.length).replace(/^,\s*/, "")}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -1446,6 +1567,9 @@ function LocationAutocomplete({ placeholder, value, onChange }) {
 function NavigationPage() {
   const [src, setSrc] = useState("");
   const [dst, setDst] = useState("");
+  // Resolved coords from autocomplete selection — avoids re-geocoding
+  const [srcCoords, setSrcCoords] = useState(null);  // { lat, lng, name }
+  const [dstCoords, setDstCoords] = useState(null);  // { lat, lng, name }
   const [routes, setRoutes] = useState(null);       // [{name,coords,color,risk,...}]
   const [selectedRoute, setSelectedRoute] = useState(0);
   const [safeCoords,  setSafeCoords]  = useState(null);  // [[lat,lng],...] from A*
@@ -1470,7 +1594,7 @@ function NavigationPage() {
   const prevGpsRef  = useRef(null);   // { lat, lng, ts } ?? for manual speed calc
   const watchIdRef  = useRef(null);   // geolocation watchId
 
-  //  Phase 5 Step 5.2: Geo-fence Alerts ????????????????????????????????????????????????????????????????????????
+  //  Phase 5 Step 5.2: Geo-fence Alerts ————————————————————————————————————
   const GEOFENCE_RADIUS_M = 500;   // metres
   const [geoAlert,     setGeoAlert]    = useState(null); // { location, dist } | null
   const [alertDismiss, setAlertDismiss] = useState(false); // user closed this alert
@@ -1508,13 +1632,13 @@ function NavigationPage() {
         osc.start(startT); osc.stop(startT + duration);
       };
       const t = ctx.currentTime;
-      // Three descending beeps: 880 Hz ?? 660 Hz ?? 440 Hz
+      // Three descending beeps: 880 Hz — 660 Hz — 440 Hz
       playBeep(880, t,       0.18);
       playBeep(660, t + 0.2, 0.18);
       playBeep(440, t + 0.4, 0.28);
     } catch (e) { console.warn("Audio error:", e); }
   };
-  //  end geo-fence ??????????????????????????????????????????????????????????????????????????????????????????????????????????
+  //  end geo-fence —————————————————————————————————————————————————————
 
   // Haversine distance in metres between two lat/lng points
   const haversineM = (la1, lo1, la2, lo2) => {
@@ -1556,7 +1680,7 @@ function NavigationPage() {
         setGpsHeading(heading);
         setGpsFix(true);
 
-        //  Step 5.2: Geo-fence check ????????????????????????????????????????????????????????????????????????????
+        //  Step 5.2: Geo-fence check ——————————————————————————————————————
         let nearest = null;
         let nearestDist = Infinity;
         for (const pin of HIGH_RISK_PINS) {
@@ -1597,7 +1721,7 @@ function NavigationPage() {
   // Clean up watch on unmount
   useEffect(() => () => { if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current); }, []);
 
-  //  Step 5.3: Speed-in-zone score deduction (throttled to 1 call per 30 s) ????
+  //  Step 5.3: Speed-in-zone score deduction (throttled to 1 call per 30 s) ——
   const lastDeductRef = useRef(0);
   useEffect(() => {
     if (!geoAlert || !gpsTracking) return;           // only when inside a zone
@@ -1624,14 +1748,31 @@ function NavigationPage() {
         console.log(`[SCORE] -${deduction} pts -> ${res.new_score} (${gpsSpeed.toFixed(1)} km/h in ${geoAlert.location})`);
     });
   }, [geoAlert, gpsSpeed, gpsTracking]);
-  //  end score deduction ??????????????????????????????????????????????????????????????????????????????????????????????????????
-  //  end GPS telematics ??????????????????????????????????????????????????????????????????????????????????????????????????????
+  //  end score deduction ———————————————————————————————————————————————————
+  //  end GPS telematics ———————————————————————————————————————————————————
+
+  // Geocode via Flask proxy — uses apiFetch so timeout/error handling is consistent
+  async function geocode(address) {
+    if (!address) return null;
+    const variants = [
+      address,
+      address.replace(/\b(college|school|institute|university|hospital|road|nagar|area|square|junction|mall|lake)\b/gi, "").trim(),
+      address.split(/[,\s]+/)[0],
+    ].filter((v, i, a) => v && v.length > 2 && a.indexOf(v) === i);
+
+    for (const q of variants) {
+      const data = await apiFetch(`/geocode?q=${encodeURIComponent(q)}&limit=3`, {}, 8000);
+      if (Array.isArray(data) && data.length > 0)
+        return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), name: data[0].display_name.split(',')[0] };
+    }
+    return null;
+  }
 
   useEffect(() => {
     // Fetch live weather via our Flask backend (OpenWeatherMap)
-    const W_ICONS = { Clear: "??️", Cloudy: "??", Fog: "??️", Haze: "??", Rain: "??️" };
+    const W_ICONS = { Clear: "☀️", Cloudy: "☁️", Fog: "🌫️", Haze: "🌫", Rain: "🌧️" };
     apiFetch("/live-weather?lat=21.1458&lon=79.0882").then(d => {
-      if (d?.weather) setWeatherData({ temp: d.temperature, text: d.weather, icon: W_ICONS[d.weather] || "??️", humidity: d.humidity });
+      if (d?.weather) setWeatherData({ temp: d.temperature, text: d.weather, icon: W_ICONS[d.weather] || "☁️", humidity: d.humidity });
     });
     // Fetch live traffic via our Flask backend (TomTom)
     apiFetch("/live-traffic?lat=21.1458&lon=79.0882").then(d => {
@@ -1639,16 +1780,9 @@ function NavigationPage() {
     });
   }, []);
 
-  async function geocode(address) {
-    if (!address) return null;
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=in&limit=1`;
-    try {
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data && data.length > 0) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), name: data[0].display_name.split(',')[0] };
-    } catch (err) { console.error("Geocode failed", err); }
-    return null;
-  }
+  // Refs to track the current suggestion lists from each autocomplete field
+  const srcSuggestionsRef = useRef([]);
+  const dstSuggestionsRef = useRef([]);
 
   const findRoutes = async () => {
     setRouteError("");
@@ -1656,20 +1790,53 @@ function NavigationPage() {
     setShortCoords(null);
     setRoutes(null);
 
-    const getLoc = async (val) => {
+    // getLoc: multi-tier resolution — never requires explicit dropdown click
+    const getLoc = async (val, cachedCoords, sugList) => {
+      // 1. Cached coords from dropdown selection (fastest)
+      if (cachedCoords) return cachedCoords;
       if (!val) return null;
       val = val.trim();
+
+      // 2. Exact preset match
       const exact = NAGPUR_LOCATIONS.find(l => l.name.toLowerCase() === val.toLowerCase());
       if (exact) return exact;
-      const coords = val.split(',').map(s => parseFloat(s.trim()));
-      if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1]))
-        return { lat: coords[0], lng: coords[1], name: "Custom Location" };
-      return await geocode(val);
+
+      // 3. Prefix match in preset list (covers typing 'YCCE' without clicking)
+      const prefix = NAGPUR_LOCATIONS.find(l => l.name.toLowerCase().startsWith(val.toLowerCase()));
+      if (prefix) return prefix;
+
+      // 4. Substring match in preset list
+      const substr = NAGPUR_LOCATIONS.find(l => l.name.toLowerCase().includes(val.toLowerCase()));
+      if (substr) return substr;
+
+      // 5. Auto-use the top suggestion already shown in the dropdown (no extra network call)
+      if (sugList && sugList.length > 0) {
+        const top = sugList[0];
+        if (!isNaN(top.lat) && !isNaN(top.lng)) return { lat: top.lat, lng: top.lng, name: top.shortName };
+      }
+
+      // 6. Raw "lat, lng" typed directly
+      const parts = val.split(',').map(s => parseFloat(s.trim()));
+      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]))
+        return { lat: parts[0], lng: parts[1], name: "Custom Location" };
+
+      // 7. Last resort: fresh Nominatim geocode
+      setRouteError("Resolving location...");
+      const result = await geocode(val);
+      setRouteError("");
+      return result;
     };
 
-    const srcLoc = await getLoc(src);
-    const dstLoc = await getLoc(dst);
-    if (!srcLoc || !dstLoc) { setRouteError("Could not find one or both locations."); return; }
+    const srcLoc = await getLoc(src, srcCoords, srcSuggestionsRef.current);
+    const dstLoc = await getLoc(dst, dstCoords, dstSuggestionsRef.current);
+    if (!srcLoc || !dstLoc) {
+      setRouteError(
+        !srcLoc && !dstLoc ? "Could not resolve either location. Please type more specifically."
+        : !srcLoc ? "Could not find source. Type the name and pick from the dropdown."
+        : "Could not find destination. Type the name and pick from the dropdown."
+      );
+      return;
+    }
 
     setRouteLoading(true);
     try {
@@ -1682,7 +1849,7 @@ function NavigationPage() {
             dest_lat:   dstLoc.lat, dest_lng:   dstLoc.lng,
             risk_penalty: 500,
           }),
-        }, 60000),
+        }, 90000),
         apiFetch("/route", {
           method: "POST",
           body: JSON.stringify({
@@ -1690,7 +1857,7 @@ function NavigationPage() {
             dest_lat:   dstLoc.lat, dest_lng:   dstLoc.lng,
             risk_penalty: 0,
           }),
-        }, 60000),
+        }, 90000),
       ]);
 
       // Both timed out / failed — give the user a clear retry message
@@ -1783,7 +1950,13 @@ function NavigationPage() {
           <div style={{ display: "flex", gap: 8 }}>
             <div style={{ position: "relative", flex: 1 }}>
               <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 8, height: 8, borderRadius: "50%", background: "#10b981", zIndex: 2 }} />
-              <LocationAutocomplete placeholder="Source location..." value={src} onChange={setSrc} />
+              <LocationAutocomplete
+                placeholder="Source location..."
+                value={src}
+                onChange={(text, coords) => { setSrc(text); if (coords) setSrcCoords(coords); else setSrcCoords(null); }}
+                onSelect={(coords) => setSrcCoords(coords)}
+                suggestionsRef={srcSuggestionsRef}
+              />
             </div>
             <button className="btn-ghost" style={{ padding: "0 12px", background: "var(--surface2)", display: "flex", alignItems: "center", justifyContent: "center" }} title="Use Live Location"
               onClick={() => {
@@ -1792,26 +1965,36 @@ function NavigationPage() {
                     const lat = pos.coords.latitude;
                     const lng = pos.coords.longitude;
                     setSrc("Locating...");
+                    setSrcCoords(null);
                     try {
-                      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                      const res = await fetch(`${API}/geocode?reverse=1&lat=${lat}&lon=${lng}`);
                       const data = await res.json();
-                      if (data && data.display_name) setSrc(data.display_name);
-                      else setSrc(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+                      const name = data?.display_name?.split(',')[0] || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                      setSrc(name);
+                      setSrcCoords({ lat, lng, name });
                     } catch (e) {
-                      setSrc(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+                      const name = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                      setSrc(name);
+                      setSrcCoords({ lat, lng, name });
                     }
                   }, undefined, { enableHighAccuracy: true });
                 } else {
                   alert("Geolocation is not supported by your browser.");
                 }
-              }}>??</button>
+              }}>📍</button>
           </div>
           <div style={{ position: "relative" }}>
             <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 8, height: 8, borderRadius: "50%", background: "#ef4444", zIndex: 2 }} />
-            <LocationAutocomplete placeholder="Destination..." value={dst} onChange={setDst} />
+            <LocationAutocomplete
+              placeholder="Destination..."
+              value={dst}
+              onChange={(text, coords) => { setDst(text); if (coords) setDstCoords(coords); else setDstCoords(null); }}
+              onSelect={(coords) => setDstCoords(coords)}
+              suggestionsRef={dstSuggestionsRef}
+            />
           </div>
           <button className="btn-primary" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }} onClick={findRoutes} disabled={routeLoading}>
-            {routeLoading ? <><span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} /> Computing A* Route...</> : "??️ Find Safe Route"}
+            {routeLoading ? <><span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} /> Computing A* Route...</> : "🗺️ Find Safe Route"}
           </button>
           {routeError && <div style={{ fontSize: 12, color: "#ef4444", background: "rgba(239,68,68,0.1)", borderRadius: 8, padding: "8px 12px" }}>{routeError}</div>}
         </div>
@@ -1830,10 +2013,10 @@ function NavigationPage() {
                   <span style={{ fontWeight: 700, fontSize: 13, color: selectedRoute === i ? r.color : "var(--text)" }}>{r.name}</span>
                   <span className={`risk-badge risk-${r.risk.level}`}>{r.risk.level}</span>
                 </div>
-                {!r.backendOk && <div style={{ fontSize: 10, color: "#f59e0b", marginBottom: 4 }}>? Backend offline ?? estimated values</div>}
+                {!r.backendOk && <div style={{ fontSize: 10, color: "#f59e0b", marginBottom: 4 }}>⚠ Backend offline — estimated values</div>}
                 <div style={{ display: "flex", gap: 16, fontSize: 12, color: "var(--muted)" }}>
                   <span>⏱ {r.time}</span>
-                  <span>?? {r.dist}</span>
+                  <span>📏 {r.dist}</span>
                 </div>
                 <div style={{ marginTop: 8 }}>
                   <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>Risk: {r.risk.highPct}% High · {r.risk.medPct}% Medium</div>
@@ -1853,7 +2036,7 @@ function NavigationPage() {
             )}
             {driving && (
               <div style={{ padding: 12, background: "rgba(59,130,246,0.1)", borderRadius: 10, border: "1px solid rgba(59,130,246,0.3)", textAlign: "center", fontSize: 13 }}>
-                <span style={{ animation: "pulse 1s infinite", display: "inline-block" }}>?</span> Navigating...
+                <span style={{ animation: "pulse 1s infinite", display: "inline-block" }}>🔵</span> Navigating...
               </div>
             )}
           </div>
@@ -1950,13 +2133,13 @@ function NavigationPage() {
               minWidth: 280, maxWidth: 420,
             }}>
               {/* Warning icon */}
-              <div style={{ fontSize: 36, animation: "pulse 0.8s ease-in-out infinite" }}>?️</div>
+              <div style={{ fontSize: 36, animation: "pulse 0.8s ease-in-out infinite" }}>⚠️</div>
               <div style={{
                 fontFamily: "Syne, sans-serif", fontWeight: 800,
                 fontSize: 17, color: "white", letterSpacing: "0.02em",
               }}>HIGH RISK ZONE DETECTED</div>
               <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", fontWeight: 500 }}>
-                ?? {geoAlert.location}
+                📍 {geoAlert.location}
               </div>
               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
                 You are {geoAlert.dist} m from a high-risk accident blackspot.
@@ -2018,7 +2201,7 @@ function NavigationPage() {
               transition: "all 0.2s",
             }}
           >
-            <span style={{ fontSize: 16 }}>{gpsTracking ? "⏹" : "??"}</span>
+            <span style={{ fontSize: 16 }}>{gpsTracking ? "⏹" : "▶"}</span>
             {gpsTracking ? "Stop GPS" : "Start Live GPS"}
           </button>
           {gpsError && <div style={{ marginTop: 8, fontSize: 11, color: "#ef4444", background: "rgba(239,68,68,0.1)", borderRadius: 8, padding: "6px 10px" }}>{gpsError}</div>}
@@ -2032,13 +2215,13 @@ function NavigationPage() {
               width: 36, height: 36, borderRadius: "50%",
               background: gpsFix ? "rgba(16,185,129,0.15)" : "rgba(100,116,139,0.15)",
               display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18,
-            }}>??</div>
+            }}>⚠️</div>
             <div>
               <div style={{ fontWeight: 700, fontSize: 13, color: gpsFix ? "#10b981" : "var(--muted)" }}>
                 {!gpsTracking ? "Idle" : !gpsFix ? "Acquiring fix..." : "Fixed"}
               </div>
               <div style={{ fontSize: 11, color: "var(--muted)" }}>
-                {gpsPos ? `±${Math.round(gpsPos.accuracy)} m accuracy` : "??"}
+                {gpsPos ? `±${Math.round(gpsPos.accuracy)} m accuracy` : "—"}
               </div>
             </div>
           </div>
@@ -2066,7 +2249,7 @@ function NavigationPage() {
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--muted)", marginTop: 4 }}>
             <span>0</span><span>40</span><span>80</span><span>120 km/h</span>
           </div>
-          {gpsSpeed > 80 && <div style={{ marginTop: 8, fontSize: 11, color: "#ef4444", fontWeight: 700 }}>? Reduce speed!</div>}
+          {gpsSpeed > 80 && <div style={{ marginTop: 8, fontSize: 11, color: "#ef4444", fontWeight: 700 }}>⚡ Reduce speed!</div>}
         </div>
 
         {/* Coordinates */}
@@ -2096,7 +2279,7 @@ function NavigationPage() {
         <div className="stat-card" style={{ marginBottom: 12 }}>
           <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>Weather</div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ fontSize: 24 }}>{weatherData ? weatherData.icon : "??️"}</div>
+            <div style={{ fontSize: 24 }}>{weatherData ? weatherData.icon : "☁️"}</div>
             <div>
               <div style={{ fontWeight: 700, fontSize: 14 }}>{weatherData ? weatherData.text : "Clear"}</div>
               <div style={{ fontSize: 11, color: "var(--muted)" }}>{weatherData ? weatherData.temp : 28}°C · {weatherData ? weatherData.humidity : 50}% humidity</div>
@@ -2108,10 +2291,10 @@ function NavigationPage() {
         <div className="stat-card">
           <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>Traffic · <span style={{ color: "#06b6d4" }}>TomTom</span></div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ fontSize: 20 }}>??</div>
+            <div style={{ fontSize: 20 }}>⚠️</div>
             <div>
               <div style={{ fontWeight: 700, color: trafficData?.traffic_density === "High" ? "#ef4444" : trafficData?.traffic_density === "Low" ? "#10b981" : "#f59e0b" }}>
-                {trafficData?.traffic_density || "??"}
+                {trafficData?.traffic_density || "—"}
               </div>
               <div style={{ fontSize: 11, color: "var(--muted)" }}>
                 {trafficData ? `${trafficData.current_speed} km/h road speed` : "Loading..."}
@@ -2157,7 +2340,7 @@ function RiskPage() {
         source: "flask",
       });
     } else {
-      setApiError("Backend offline ?? using local simulation");
+      setApiError("Backend offline — using local simulation");
       const hour = new Date().getHours();
       const pred = predictRisk({ hour, weather: "Clear", roadType: "City Road", density: "Low", lat: loc.lat, lng: loc.lng });
       setResult({ ...pred, source: "local" });
@@ -2173,7 +2356,7 @@ function RiskPage() {
   const density = usedInputs.traffic_density ?? "Low";
 
   const factors = result ? [
-    { label: "Time of Day", value: hour >= 20 || hour <= 5 ? `${hour}:00 ?? Night` : hour >= 17 ? `${hour}:00 ?? Evening` : `${hour}:00 ?? Day`, score: hour >= 20 || hour <= 5 ? 85 : hour >= 17 ? 50 : 20, color: hour >= 20 || hour <= 5 ? "#ef4444" : hour >= 17 ? "#f59e0b" : "#10b981" },
+    { label: "Time of Day", value: hour >= 20 || hour <= 5 ? `${hour}:00 — Night` : hour >= 17 ? `${hour}:00 — Evening` : `${hour}:00 — Day`, score: hour >= 20 || hour <= 5 ? 85 : hour >= 17 ? 50 : 20, color: hour >= 20 || hour <= 5 ? "#ef4444" : hour >= 17 ? "#f59e0b" : "#10b981" },
     { label: "Weather ⮐ Live OWM", value: weather, score: weather === "Rain" ? 75 : weather === "Fog" ? 90 : weather === "Haze" ? 60 : weather === "Cloudy" ? 35 : 20, color: ["Rain", "Fog", "Haze"].includes(weather) ? "#f59e0b" : "#10b981" },
     { label: "Road Type", value: roadType, score: ["Junction", "Highway", "Flyover"].includes(roadType) ? 70 : 35, color: ["Junction", "Highway"].includes(roadType) ? "#ef4444" : "#10b981" },
     { label: "Traffic ⮐ Live TomTom", value: density, score: density === "High" ? 80 : density === "Medium" ? 50 : 20, color: density === "High" ? "#ef4444" : density === "Medium" ? "#f59e0b" : "#10b981" },
@@ -2201,9 +2384,9 @@ function RiskPage() {
               <span style={{ animation: "pulse 2s infinite", display: "inline-block" }}>?</span> LIVE DATA MODE ACTIVE
             </div>
             <div style={{ color: "var(--muted)" }}>
-              ??️ Weather ?? <strong style={{ color: "var(--text)" }}>OpenWeatherMap API</strong><br />
-              ?? Traffic ?? <strong style={{ color: "var(--text)" }}>TomTom Traffic API</strong><br />
-              ⏰ Time ?? <strong style={{ color: "var(--text)" }}>Current server clock</strong>
+              🌧️ Weather · <strong style={{ color: "var(--text)" }}>OpenWeatherMap API</strong><br />
+              🚦 Traffic · <strong style={{ color: "var(--text)" }}>TomTom Traffic API</strong><br />
+              ⏰ Time · <strong style={{ color: "var(--text)" }}>Current server clock</strong>
             </div>
           </div>
 
@@ -2213,7 +2396,7 @@ function RiskPage() {
                 <span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} />
                 Fetching Live Data...
               </span>
-            ) : "?? Analyze Live Risk"}
+            ) : "🔍 Analyze Live Risk"}
           </button>
 
           {apiError && (
@@ -2239,10 +2422,11 @@ function RiskPage() {
       </div>
 
       {/* Results */}
-      <div style={{ flex: 1, overflow: "auto", padding: 24, paddingLeft: 320, paddingRight: 340 }}>
+      <div style={{ position: "fixed", left: 300, right: 320, top: 60, bottom: 0, overflow: "auto", padding: "24px" }}>
+        <div style={{ maxWidth: 680, margin: "0 auto" }}>
         {!result && !loading && (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60vh", gap: 16, color: "var(--muted)", textAlign: "center" }}>
-            <div style={{ fontSize: 48, opacity: 0.3 }}>??</div>
+            <div style={{ fontSize: 48, opacity: 0.3 }}>⚠️</div>
             <div style={{ fontSize: 15, fontFamily: "Syne, sans-serif" }}>Configure parameters and run prediction</div>
             <div style={{ fontSize: 13 }}>The AI will analyze accident risk using the Random Forest model</div>
           </div>
@@ -2279,14 +2463,14 @@ function RiskPage() {
                 <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
                   <div style={{ flex: 1, padding: "10px 12px", background: "rgba(6,182,212,0.08)", borderRadius: 10, border: "1px solid rgba(6,182,212,0.2)", textAlign: "left" }}>
                     <div style={{ color: "#06b6d4", fontSize: 10, fontWeight: 700, marginBottom: 4 }}>??️ LIVE WEATHER</div>
-                    <div style={{ fontWeight: 700, fontSize: 13 }}>{liveData.weather?.weather ?? "??"}</div>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{liveData.weather?.weather ?? "—"}</div>
                     <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
                       {liveData.weather?.temperature}°C · {liveData.weather?.humidity}% RH
                     </div>
                   </div>
                   <div style={{ flex: 1, padding: "10px 12px", background: "rgba(245,158,11,0.08)", borderRadius: 10, border: "1px solid rgba(245,158,11,0.2)", textAlign: "left" }}>
                     <div style={{ color: "#f59e0b", fontSize: 10, fontWeight: 700, marginBottom: 4 }}>?? LIVE TRAFFIC</div>
-                    <div style={{ fontWeight: 700, fontSize: 13 }}>{liveData.traffic?.traffic_density ?? "??"}</div>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{liveData.traffic?.traffic_density ?? "—"}</div>
                     <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
                       {liveData.traffic?.current_speed} km/h · {Math.round((liveData.traffic?.congestion_ratio ?? 0) * 100)}% congestion
                     </div>
@@ -2301,7 +2485,7 @@ function RiskPage() {
               }}>
                 {result.level === "High" ? "?️ Warning: High accident risk zone. Avoid this route or proceed with extreme caution." :
                   result.level === "Medium" ? "? Caution: Moderate accident risk. Drive carefully and reduce speed." :
-                    "?? Safe Zone: Low accident risk. Standard driving precautions apply."}
+                    "✅ Safe Zone: Low accident risk. Standard driving precautions apply."}
               </div>
             </div>
 
@@ -2345,7 +2529,7 @@ function RiskPage() {
 
             {/* Historical data */}
             <div className="glass" style={{ padding: 24 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, fontFamily: "Syne, sans-serif" }}>Historical Records ?? {inputs.location}</h3>
+              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, fontFamily: "Syne, sans-serif" }}>Historical Records — {inputs.location}</h3>
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                   <thead>
@@ -2374,6 +2558,7 @@ function RiskPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* Right */}
@@ -2381,8 +2566,8 @@ function RiskPage() {
         <h3 style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted)" }}>Safety Recommendations</h3>
         {[
           { icon: "—", title: "Speed", desc: "Reduce to 40 km/h in rain and fog conditions" },
-          { icon: "??", title: "Visibility", desc: "Turn on headlights in fog or at night" },
-          { icon: "??", title: "Distraction", desc: "Avoid phone use while driving" },
+          { icon: "—", title: "Visibility", desc: "Turn on headlights in fog or at night" },
+          { icon: "—", title: "Distraction", desc: "Avoid phone use while driving" },
           { icon: "—", title: "Route", desc: "Consider safer alternate routes if risk is high" },
           { icon: "?", title: "Vehicle", desc: "Check brakes and tires before driving in rain" },
         ].map((r, i) => (
@@ -2452,11 +2637,11 @@ function LeaderboardPage() {
     );
   };
 
-  const medalEmoji = (rank) => rank === 1 ? "??" : rank === 2 ? "??" : rank === 3 ? "??" : `#${rank}`;
+  const medalEmoji = (rank) => rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
 
   return (
-    <div style={{ paddingTop: 60, minHeight: "100vh", background: "var(--bg)" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 20px" }}>
+    <div style={{ paddingTop: 60, minHeight: "100vh", background: "var(--bg)", width: "100%" }}>
+      <div style={{ maxWidth: 900, marginLeft: "auto", marginRight: "auto", padding: "32px 20px" }}>
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
@@ -2614,7 +2799,7 @@ function LeaderboardPage() {
 }
 
 // ============================================================
-// PHASE 6.1 ?? ADMIN ANALYTICS DASHBOARD (Recharts + Role-Gated)
+// PHASE 6.1 — ADMIN ANALYTICS DASHBOARD (Recharts + Role-Gated)
 // ============================================================
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -2631,15 +2816,25 @@ function AdminPage() {
 
   if (!user || user.role !== "admin") {
     return (
-      <div style={{ minHeight: "100vh", paddingTop: 120, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-        <div style={{ fontSize: 64 }}>🔒</div>
+      <div style={{
+        minHeight: "100vh",
+        paddingTop: 60,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 16,
+        textAlign: "center",
+        padding: "60px 24px 40px",
+      }}>
+        <div style={{ fontSize: 64, lineHeight: 1 }}>🔒</div>
         <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 800 }}>Admin Access Required</h2>
-        <p style={{ color: "var(--muted)", fontSize: 14, textAlign: "center", maxWidth: 360 }}>
+        <p style={{ color: "var(--muted)", fontSize: 14, maxWidth: 360, lineHeight: 1.6 }}>
           This page is restricted to users with the <strong>Admin</strong> role.<br />
           Contact your system administrator to request access.
         </p>
         <div style={{ fontSize: 12, fontFamily: "monospace", background: "var(--surface2)", padding: "6px 14px", borderRadius: 8, color: "#ef4444" }}>
-          403 ?? Forbidden: role="{user?.role || "guest"}"
+          403 — Forbidden: role="{user?.role || "guest"}"
         </div>
       </div>
     );
@@ -2648,7 +2843,7 @@ function AdminPage() {
   return <AdminDashboard />;
 }
 
-//  Actual dashboard (only rendered for role=admin) ??????????????????????
+//  Actual dashboard (only rendered for role=admin) ———————————
 function AdminDashboard() {
   const [tab,          setTab]          = useState("charts");
   const [analytics,    setAnalytics]    = useState(null);   // /api/admin/analytics
@@ -2676,7 +2871,7 @@ function AdminDashboard() {
   // Fall back to local data if API is offline
   const stats = apiStats ? {
     total: apiStats.total, high: apiStats.high, med: apiStats.medium,
-    low: apiStats.low, avgAcc: apiStats.avg_accidents?.toFixed(1) ?? "??",
+    low: apiStats.low, avgAcc: apiStats.avg_accidents?.toFixed(1) ?? "—",
   } : {
     total: DATASET.length,
     high: DATASET.filter(d => d.risk_level === "High").length,
@@ -2688,12 +2883,12 @@ function AdminDashboard() {
   const blackspots = apiBlackspots.length > 0 ? apiBlackspots : NAGPUR_LOCATIONS.map(loc => {
     const data = DATASET.filter(d => d.location === loc.name);
     return { ...loc, total: data.length, high: data.filter(d => d.risk_level === "High").length,
-      avg_accidents: data.length ? (data.reduce((s, d) => s + d.accident_count, 0) / data.length).toFixed(1) : 0, status: "??" };
+      avg_accidents: data.length ? (data.reduce((s, d) => s + d.accident_count, 0) / data.length).toFixed(1) : 0, status: "—" };
   }).sort((a, b) => b.high - a.high);
 
   const tableData = apiDataset.length > 0 ? apiDataset : DATASET.slice(0, 20);
 
-  //  Build chart data (use API analytics or fallback from DATASET) ????
+  //  Build chart data (use API analytics or fallback from DATASET) ——
   const accByHour = analytics?.accidents_by_hour ?? (() => {
     const buckets = Array.from({ length: 24 }, (_, h) => ({ hour: h, High: 0, Medium: 0, Low: 0 }));
     DATASET.forEach(d => {
@@ -2745,7 +2940,7 @@ function AdminDashboard() {
     URL.revokeObjectURL(url);
   };
 
-  //  Step 6.2: PDF Report generation (jsPDF + html2canvas) ????????????????
+  //  Step 6.2: PDF Report generation (jsPDF + html2canvas) ————————
   const chartsRef   = useRef(null);
   const [pdfLoading, setPdfLoading] = useState(false);
 
@@ -2832,7 +3027,7 @@ function AdminDashboard() {
       doc.text("SafeRoute AI ? Powered by Random Forest + A* Risk Routing", 20, H - 12);
       doc.text(`Page 1`, W - 28, H - 12);
 
-      //  Page 2+: Charts screenshot ????????????????????????
+      //  Page 2+: Charts screenshot ————————————
       if (chartsRef.current) {
         const canvas = await html2canvas(chartsRef.current, {
           backgroundColor: "#0a0e1a",
@@ -2899,7 +3094,7 @@ function AdminDashboard() {
       setPdfLoading(false);
     }
   };
-  //  end PDF report ???????????????????????????????????????????????????????
+  //  end PDF report ———————————————————————————?
 
   // Custom Recharts tooltip style
   const tooltipStyle = { background: "rgba(10,14,26,0.95)", border: "1px solid rgba(99,170,255,0.2)", borderRadius: 10, fontSize: 12 };
@@ -2911,8 +3106,8 @@ function AdminDashboard() {
     percent > 0.05 ? `${name} ${(percent * 100).toFixed(0)}%` : "";
 
   return (
-    <div style={{ minHeight: "100vh", paddingTop: 80, padding: "80px 24px 40px" }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+    <div style={{ minHeight: "100vh", paddingTop: 80, padding: "80px 24px 40px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ width: "100%", maxWidth: 1280 }}>
 
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
@@ -2949,12 +3144,12 @@ function AdminDashboard() {
         <div className="admin-grid" style={{ marginBottom: 28 }}>
           {[
             { label: "Total Records",      val: stats.total,  color: "#3b82f6", icon: "📊" },
-            { label: "High Risk Events",   val: stats.high,   color: "#ef4444", icon: "??" },
-            { label: "Medium Risk",        val: stats.med,    color: "#f59e0b", icon: "??" },
-            { label: "Safe Events",        val: stats.low,    color: "#10b981", icon: "??" },
+            { label: "High Risk Events",   val: stats.high,   color: "#ef4444", icon: "🔴" },
+            { label: "Medium Risk",        val: stats.med,    color: "#f59e0b", icon: "🟡" },
+            { label: "Safe Events",        val: stats.low,    color: "#10b981", icon: "🟢" },
             { label: "Avg Accidents/Loc",  val: stats.avgAcc, color: "#8b5cf6", icon: "📉" },
-            { label: "Registered Users",   val: analytics?.total_users   ?? "??", color: "#06b6d4", icon: "??" },
-            { label: "Hazards Reported",   val: analytics?.total_hazards ?? "??", color: "#ec4899", icon: "?️" },
+            { label: "Registered Users",   val: analytics?.total_users   ?? "—", color: "#06b6d4", icon: "👥" },
+            { label: "Hazards Reported",   val: analytics?.total_hazards ?? "—", color: "#ec4899", icon: "⚠️" },
           ].map(s => (
             <div key={s.label} className="stat-card">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
